@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Printers – GeekSupportSales</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy:  { 50:'#f0f4ff',100:'#dce6ff',200:'#b9ccff',300:'#8aaaff',400:'#5580ff',500:'#1a56db',600:'#1447c0',700:'#0f389e',800:'#0c2d7e',900:'#0a2260' },
+            amber2:{ 400:'#fbbf24',500:'#f59e0b',600:'#d97706' },
+          },
+          fontFamily:{ sans:['Inter','system-ui','sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+  <style>
+    html{scroll-behavior:smooth}
+    .ticker-wrap{overflow:hidden;white-space:nowrap}
+    .ticker-inner{display:inline-block;animation:ticker 35s linear infinite}
+    @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    .card-lift{transition:transform .2s ease,box-shadow .2s ease}
+    .card-lift:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(20,71,192,.14)}
+    .badge-pulse{animation:bpulse 2s ease-in-out infinite}
+    @keyframes bpulse{0%,100%{opacity:1}50%{opacity:.55}}
+    /* Range slider */
+    input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:4px;background:#e2e8f0;outline:none}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#1447c0;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    /* Checkbox custom */
+    .filter-cb:checked{accent-color:#1447c0}
+    /* Quick view modal */
+    #qv-modal{transition:opacity .2s ease}
+    #qv-inner{transition:transform .25s ease,opacity .25s ease}
+    /* Star rating */
+    .stars span{color:#fbbf24}
+    /* List view card */
+    .list-card{display:flex;gap:1rem;align-items:center}
+    /* Skeleton */
+    .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    /* Tooltip */
+    [data-tip]{position:relative}
+    [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;font-size:11px;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:99}
+    /* Active filter chip */
+    .chip{display:inline-flex;align-items:center;gap:4px;background:#dce6ff;color:#1447c0;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+    /* Scrollbar thin */
+    .thin-scroll::-webkit-scrollbar{width:4px}
+    .thin-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+  </style>
+</head>
+<body class="font-sans bg-slate-50 text-slate-800 antialiased">
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="bg-navy-800 text-white text-xs font-medium py-2 ticker-wrap">
+  <div class="ticker-inner">
+    &nbsp;&nbsp;<i class="ri-truck-line mr-1"></i>Free Shipping on orders over $99&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-tools-line mr-1"></i>Free Expert Setup on Every Printer&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-price-tag-3-line mr-1"></i>Best Price Guarantee&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-customer-service-2-line mr-1"></i>24/7 Tech Support: 1-800-GEEK-PRN&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-shield-check-line mr-1"></i>2-Year Warranty Included&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-truck-line mr-1"></i>Free Shipping on orders over $99&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-tools-line mr-1"></i>Free Expert Setup on Every Printer&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-price-tag-3-line mr-1"></i>Best Price Guarantee&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-customer-service-2-line mr-1"></i>24/7 Tech Support: 1-800-GEEK-PRN&nbsp;&nbsp;·&nbsp;&nbsp;
+    <i class="ri-shield-check-line mr-1"></i>2-Year Warranty Included&nbsp;&nbsp;&nbsp;
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-5 py-3 flex items-center gap-6">
+    <a href="index.html" class="flex items-center gap-2.5 shrink-0">
+      <div class="bg-navy-600 rounded-xl w-10 h-10 flex items-center justify-center">
+        <i class="ri-printer-fill text-white text-xl"></i>
+      </div>
+      <div class="leading-tight">
+        <div class="text-[1.1rem] font-black tracking-tight">
+          <span class="text-navy-600">Geek</span><span class="text-amber2-500">Support</span><span class="text-slate-700">Sales</span>
+        </div>
+        <div class="text-[10px] text-slate-400 font-medium">Your Printer Experts</div>
+      </div>
+    </a>
+    <div class="hidden md:flex flex-1 max-w-lg">
+      <div class="flex w-full rounded-xl border border-slate-200 overflow-hidden bg-slate-50 focus-within:border-navy-500 focus-within:bg-white transition">
+        <input id="search-input" type="text" placeholder="Search printers, brand, model…" oninput="applyFilters()" class="flex-1 px-4 py-2.5 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400"/>
+        <button class="bg-navy-600 hover:bg-navy-700 px-4 text-white transition"><i class="ri-search-2-line text-base"></i></button>
+      </div>
+    </div>
+    <nav class="hidden lg:flex items-center gap-5 text-sm font-semibold text-slate-600">
+      <a href="index.html" class="hover:text-navy-600 transition">Home</a>
+      <a href="products.html" class="text-navy-600 border-b-2 border-navy-600 pb-0.5">Products</a>
+      <a href="index.html#deals" class="hover:text-navy-600 transition">Deals</a>
+      <a href="contact.html" class="hover:text-navy-600 transition">Contact</a>
+    </nav>
+    <div class="flex items-center gap-3 ml-auto">
+      <button class="text-slate-500 hover:text-navy-600 transition hidden sm:block"><i class="ri-heart-3-line text-xl"></i></button>
+      <button onclick="toggleCart()" class="relative text-slate-500 hover:text-navy-600 transition">
+        <i class="ri-shopping-cart-2-line text-xl"></i>
+        <span id="cart-count" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span>
+      </button>
+      <a href="contact.html" class="hidden sm:flex items-center gap-1.5 bg-navy-600 hover:bg-navy-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
+        <i class="ri-user-line"></i> Sign In
+      </a>
+    </div>
+  </div>
+  <!-- Sub-nav -->
+  <div class="border-t border-slate-100 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-5 py-2 flex gap-5 text-xs font-semibold text-slate-500 overflow-x-auto">
+      <a href="products.html" class="text-navy-600 whitespace-nowrap flex items-center gap-1"><i class="ri-printer-line"></i> All Printers</a>
+      <a href="products.html?cat=inkjet" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-drop-line"></i> Inkjet</a>
+      <a href="products.html?cat=laser" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-fire-line"></i> Laser</a>
+      <a href="products.html?cat=allinone" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-file-copy-2-line"></i> All-in-One</a>
+      <a href="products.html?cat=business" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-building-2-line"></i> Business</a>
+      <a href="products.html?cat=ink" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-ink-bottle-line"></i> Ink & Toner</a>
+      <a href="products.html?cat=deals" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-flashlight-line"></i> Flash Deals</a>
+      <a href="contact.html" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-headphone-line"></i> Tech Support</a>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE HEADER -->
+<div class="bg-white border-b border-slate-100">
+  <div class="max-w-7xl mx-auto px-5 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+        <a href="index.html" class="hover:text-navy-600 transition">Home</a>
+        <i class="ri-arrow-right-s-line"></i>
+        <span class="text-slate-600 font-semibold" id="breadcrumb-cat">All Printers</span>
+      </div>
+      <h1 class="text-2xl font-black text-slate-800" id="page-title">All Printers</h1>
+      <p class="text-slate-400 text-xs mt-0.5" id="result-count">Showing all products</p>
+    </div>
+    <!-- Sort + View toggle -->
+    <div class="flex items-center gap-3">
+      <select id="sort-select" onchange="applyFilters()" class="border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600 bg-white outline-none focus:border-navy-500 cursor-pointer">
+        <option value="featured">Featured</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="newest">Newest First</option>
+        <option value="discount">Biggest Discount</option>
+      </select>
+      <div class="flex border border-slate-200 rounded-xl overflow-hidden">
+        <button id="btn-grid" onclick="setView('grid')" class="px-3 py-2 bg-navy-600 text-white transition" data-tip="Grid View">
+          <i class="ri-grid-fill text-base"></i>
+        </button>
+        <button id="btn-list" onclick="setView('list')" class="px-3 py-2 bg-white text-slate-400 hover:text-navy-600 transition" data-tip="List View">
+          <i class="ri-list-check-2 text-base"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIVE FILTER CHIPS -->
+<div id="active-chips" class="max-w-7xl mx-auto px-5 py-2 flex flex-wrap gap-2 hidden"></div>
+
+<!-- MAIN LAYOUT -->
+<div class="max-w-7xl mx-auto px-5 py-6 flex gap-6">
+
+  <!-- ===== SIDEBAR FILTERS ===== -->
+  <aside class="hidden lg:block w-60 shrink-0">
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden sticky top-28">
+
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="ri-equalizer-2-line text-navy-600"></i> Filters</span>
+        <button onclick="clearAllFilters()" class="text-xs text-navy-600 hover:underline font-semibold">Clear All</button>
+      </div>
+
+      <div class="p-5 space-y-6 thin-scroll overflow-y-auto max-h-[calc(100vh-180px)]">
+
+        <!-- Category -->
+        <div>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Category</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="radio" name="cat" value="all" class="filter-cb accent-navy-600" checked onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">All Printers</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="radio" name="cat" value="inkjet" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Inkjet</span>
+              <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">6</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="radio" name="cat" value="laser" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Laser</span>
+              <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">5</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="radio" name="cat" value="allinone" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">All-in-One</span>
+              <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">5</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="radio" name="cat" value="business" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Business</span>
+              <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">4</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="radio" name="cat" value="ink" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Ink & Toner</span>
+              <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">4</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Price Range -->
+        <div>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Price Range</p>
+          <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+            <span>$<span id="price-min-label">0</span></span>
+            <span>$<span id="price-max-label">600</span></span>
+          </div>
+          <input type="range" id="price-max" min="0" max="600" value="600" step="10" oninput="updatePriceLabel();applyFilters()" class="w-full"/>
+          <div class="flex gap-2 mt-3">
+            <input type="number" id="price-from" placeholder="Min" min="0" max="600" oninput="applyFilters()" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-navy-500"/>
+            <input type="number" id="price-to" placeholder="Max" min="0" max="600" oninput="applyFilters()" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-navy-500"/>
+          </div>
+        </div>
+
+        <!-- Brand -->
+        <div>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Brand</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="HP" class="filter-cb brand-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">HP</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="Canon" class="filter-cb brand-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Canon</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="Brother" class="filter-cb brand-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Brother</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="Epson" class="filter-cb brand-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Epson</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="Xerox" class="filter-cb brand-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Xerox</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Rating -->
+        <div>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Min Rating</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="rating" value="0" class="filter-cb" checked onchange="applyFilters()"/>
+              <span class="text-amber2-400 text-sm">★★★★★</span><span class="text-xs text-slate-400 ml-1">Any</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="rating" value="4" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-amber2-400 text-sm">★★★★</span><span class="text-xs text-slate-400 ml-1">& up</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="rating" value="4.5" class="filter-cb" onchange="applyFilters()"/>
+              <span class="text-amber2-400 text-sm">★★★★½</span><span class="text-xs text-slate-400 ml-1">& up</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Features</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="wireless" class="filter-cb feat-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Wireless / Wi-Fi</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="duplex" class="filter-cb feat-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Auto Duplex</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="color" class="filter-cb feat-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Color Printing</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer group">
+              <input type="checkbox" value="mobile" class="filter-cb feat-cb" onchange="applyFilters()"/>
+              <span class="text-sm text-slate-700 group-hover:text-navy-600 transition">Mobile Print</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- On Sale -->
+        <div>
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" id="sale-only" class="filter-cb" onchange="applyFilters()"/>
+            <span class="text-sm font-semibold text-slate-700">On Sale Only</span>
+            <span class="ml-auto bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-md">SALE</span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== PRODUCT GRID ===== -->
+  <div class="flex-1 min-w-0">
+    <!-- Mobile filter bar -->
+    <div class="lg:hidden flex gap-2 mb-4">
+      <button onclick="toggleMobileFilter()" class="flex items-center gap-1.5 border border-slate-200 bg-white rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:border-navy-500 hover:text-navy-600 transition">
+        <i class="ri-equalizer-2-line"></i> Filters
+      </button>
+      <select id="sort-select-mob" onchange="document.getElementById('sort-select').value=this.value;applyFilters()" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600 bg-white outline-none">
+        <option value="featured">Featured</option>
+        <option value="price-asc">Price: Low → High</option>
+        <option value="price-desc">Price: High → Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="newest">Newest</option>
+        <option value="discount">Biggest Discount</option>
+      </select>
+    </div>
+
+    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-20">
+      <i class="ri-search-eye-line text-slate-200 text-7xl mb-4"></i>
+      <h3 class="text-xl font-bold text-slate-500">No products found</h3>
+      <p class="text-slate-400 text-sm mt-2">Try adjusting your filters or search term.</p>
+      <button onclick="clearAllFilters()" class="mt-5 bg-navy-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-navy-700 transition">Clear Filters</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE FILTER DRAWER -->
+<div id="mob-filter-overlay" class="fixed inset-0 bg-black/40 z-40 hidden" onclick="toggleMobileFilter()"></div>
+<div id="mob-filter-drawer" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto thin-scroll">
+  <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white">
+    <span class="font-bold text-slate-800 flex items-center gap-1.5"><i class="ri-equalizer-2-line text-navy-600"></i> Filters</span>
+    <button onclick="toggleMobileFilter()" class="text-slate-400 hover:text-slate-700"><i class="ri-close-line text-xl"></i></button>
+  </div>
+  <div class="p-5 pb-8 text-sm text-slate-500">
+    <p class="text-center text-slate-400">Use the sidebar filters on desktop for full filter options.</p>
+    <div class="mt-4 space-y-3">
+      <p class="font-bold text-slate-700 text-xs uppercase tracking-widest">Category</p>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="setCatMob('all')" class="mob-cat-btn px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-navy-600 hover:text-white hover:border-navy-600 transition">All</button>
+        <button onclick="setCatMob('inkjet')" class="mob-cat-btn px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-navy-600 hover:text-white hover:border-navy-600 transition">Inkjet</button>
+        <button onclick="setCatMob('laser')" class="mob-cat-btn px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-navy-600 hover:text-white hover:border-navy-600 transition">Laser</button>
+        <button onclick="setCatMob('allinone')" class="mob-cat-btn px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-navy-600 hover:text-white hover:border-navy-600 transition">All-in-One</button>
+        <button onclick="setCatMob('business')" class="mob-cat-btn px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-navy-600 hover:text-white hover:border-navy-600 transition">Business</button>
+        <button onclick="setCatMob('ink')" class="mob-cat-btn px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-navy-600 hover:text-white hover:border-navy-600 transition">Ink & Toner</button>
+      </div>
+    </div>
+    <button onclick="toggleMobileFilter()" class="mt-6 w-full bg-navy-600 text-white py-3 rounded-xl font-bold hover:bg-navy-700 transition">Apply Filters</button>
+  </div>
+</div>
+
+<!-- QUICK VIEW MODAL -->
+<div id="qv-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 opacity-0 pointer-events-none">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeQV()"></div>
+  <div id="qv-inner" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto thin-scroll transform scale-95 opacity-0">
+    <button onclick="closeQV()" class="absolute top-4 right-4 z-10 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full flex items-center justify-center transition">
+      <i class="ri-close-line text-slate-600 text-lg"></i>
+    </button>
+    <div id="qv-content" class="p-6 md:p-8"></div>
+  </div>
+</div>
+
+<!-- CART SIDEBAR -->
+<div id="cart-sidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+  <div class="flex items-center justify-between p-5 border-b bg-navy-700 text-white">
+    <h3 class="font-bold flex items-center gap-2"><i class="ri-shopping-cart-2-line text-lg"></i> Your Cart</h3>
+    <button onclick="toggleCart()" class="text-white hover:text-amber2-400 transition text-xl"><i class="ri-close-line"></i></button>
+  </div>
+  <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3 thin-scroll">
+    <div class="text-center mt-12"><i class="ri-shopping-cart-2-line text-slate-200 text-5xl"></i><p class="text-slate-400 text-sm mt-3">Your cart is empty</p></div>
+  </div>
+  <div class="p-5 border-t bg-slate-50">
+    <div class="flex justify-between font-bold text-base mb-4 text-slate-800">
+      <span>Total:</span><span id="cart-total" class="text-navy-600">$0.00</span>
+    </div>
+    <button class="w-full bg-navy-600 hover:bg-navy-700 text-white font-bold py-3 rounded-xl transition mb-2 flex items-center justify-center gap-2 text-sm">
+      <i class="ri-lock-2-line"></i> Secure Checkout
+    </button>
+    <button onclick="toggleCart()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 rounded-xl transition text-sm">Continue Shopping</button>
+  </div>
+</div>
+<div id="cart-overlay" class="fixed inset-0 bg-black/40 z-40 hidden" onclick="toggleCart()"></div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-slate-800 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 translate-y-4">
+  <i class="ri-checkbox-circle-fill text-emerald-400 text-base"></i>
+  <span id="toast-msg">Added to cart!</span>
+</div>
+
+<!-- BACK TO TOP -->
+<button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fixed bottom-6 right-6 bg-navy-600 hover:bg-navy-700 text-white w-11 h-11 rounded-full shadow-lg transition z-30 flex items-center justify-center">
+  <i class="ri-arrow-up-line text-lg"></i>
+</button>
+
+<script>
+// ===== PRODUCT DATA =====
+const PRODUCTS = [
+  { id:1, name:'HP DeskJet 4155e', brand:'HP', cat:'inkjet', price:89.99, oldPrice:119.99, rating:4.9, reviews:312, badge:'SALE', badgeColor:'red', color:'#dce6ff', iconColor:'#1447c0', features:['wireless','color','mobile'], ppm:8, desc:'Wireless all-in-one inkjet printer with HP+ smart printing. Print, scan, copy from anywhere with the HP Smart app.', specs:['Print Speed: 8 ppm color','Resolution: 4800×1200 dpi','Connectivity: Wi-Fi, USB','Paper Capacity: 60 sheets','Dimensions: 17.1 × 14.2 × 6.1 in'], newest:false, discount:25 },
+  { id:2, name:'Canon PIXMA TR8620', brand:'Canon', cat:'allinone', price:149.99, oldPrice:179.99, rating:4.8, reviews:198, badge:'NEW', badgeColor:'green', color:'#f1f5f9', iconColor:'#475569', features:['wireless','color','duplex','mobile'], ppm:15, desc:'Home office all-in-one with 5-color individual ink system. Exceptional photo quality and fast document printing.', specs:['Print Speed: 15 ipm mono','Resolution: 4800×1200 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 200 sheets','Dimensions: 14.7 × 13.1 × 6.1 in'], newest:true, discount:17 },
+  { id:3, name:'Brother HL-L2350DW', brand:'Brother', cat:'laser', price:109.99, oldPrice:139.99, rating:4.7, reviews:541, badge:'BEST SELLER', badgeColor:'amber', color:'#fffbeb', iconColor:'#d97706', features:['wireless','duplex'], ppm:32, desc:'Compact monochrome laser printer with automatic duplex printing. Perfect for home offices needing fast, sharp text.', specs:['Print Speed: 32 ppm','Resolution: 2400×600 dpi','Connectivity: Wi-Fi, USB','Paper Capacity: 250 sheets','Dimensions: 14.0 × 14.4 × 7.2 in'], newest:false, discount:21 },
+  { id:4, name:'Epson EcoTank ET-2800', brand:'Epson', cat:'inkjet', price:174.99, oldPrice:249.99, rating:4.9, reviews:427, badge:'SALE', badgeColor:'red', color:'#ecfdf5', iconColor:'#059669', features:['wireless','color','mobile'], ppm:10, desc:'Revolutionary supertank printer — no cartridges needed. Comes with up to 2 years of ink in the box.', specs:['Print Speed: 10 ppm color','Resolution: 5760×1440 dpi','Connectivity: Wi-Fi, USB','Paper Capacity: 100 sheets','Dimensions: 13.7 × 11.8 × 5.7 in'], newest:false, discount:30 },
+  { id:5, name:'HP LaserJet Pro M404n', brand:'HP', cat:'business', price:249.99, oldPrice:399.99, rating:4.8, reviews:289, badge:'FLASH DEAL', badgeColor:'red', color:'#dce6ff', iconColor:'#1447c0', features:['duplex'], ppm:40, desc:'Professional monochrome laser printer at 40 ppm. Network-ready with Gigabit Ethernet for busy office environments.', specs:['Print Speed: 40 ppm','Resolution: 1200×1200 dpi','Connectivity: Ethernet, USB','Paper Capacity: 350 sheets','Dimensions: 14.9 × 14.8 × 8.9 in'], newest:false, discount:37 },
+  { id:6, name:'Canon imageCLASS MF743Cdw', brand:'Canon', cat:'business', price:449.99, oldPrice:549.99, rating:4.7, reviews:156, badge:'', badgeColor:'', color:'#f1f5f9', iconColor:'#475569', features:['wireless','color','duplex','mobile'], ppm:22, desc:'Color laser all-in-one for business. Print, copy, scan, fax with fast 22 ppm color output and 50-sheet ADF.', specs:['Print Speed: 22 ppm color','Resolution: 600×600 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 550 sheets','Dimensions: 19.3 × 19.3 × 19.7 in'], newest:true, discount:18 },
+  { id:7, name:'Brother MFC-J995DW', brand:'Brother', cat:'allinone', price:199.99, oldPrice:249.99, rating:4.6, reviews:203, badge:'', badgeColor:'', color:'#fffbeb', iconColor:'#d97706', features:['wireless','color','duplex','mobile'], ppm:12, desc:'INKvestment Tank all-in-one with up to 1 year of ink included. Print, scan, copy, fax wirelessly.', specs:['Print Speed: 12 ipm color','Resolution: 6000×1200 dpi','Connectivity: Wi-Fi, USB','Paper Capacity: 150 sheets','Dimensions: 15.4 × 14.8 × 8.1 in'], newest:false, discount:20 },
+  { id:8, name:'Epson WorkForce WF-7840', brand:'Epson', cat:'business', price:299.99, oldPrice:379.99, rating:4.5, reviews:118, badge:'', badgeColor:'', color:'#ecfdf5', iconColor:'#059669', features:['wireless','color','duplex','mobile'], ppm:18, desc:'Wide-format all-in-one prints up to 13×19 inches. Ideal for architects, designers, and marketing teams.', specs:['Print Speed: 18 ipm mono','Resolution: 4800×2400 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 500 sheets','Dimensions: 23.4 × 17.3 × 11.5 in'], newest:false, discount:21 },
+  { id:9, name:'HP OfficeJet Pro 9015e', brand:'HP', cat:'allinone', price:219.99, oldPrice:279.99, rating:4.8, reviews:374, badge:'TOP RATED', badgeColor:'navy', color:'#dce6ff', iconColor:'#1447c0', features:['wireless','color','duplex','mobile'], ppm:22, desc:'Smart all-in-one with HP+ and 6 months free Instant Ink. Fast 22 ppm, auto duplex, 35-sheet ADF.', specs:['Print Speed: 22 ppm mono','Resolution: 4800×1200 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 250 sheets','Dimensions: 17.9 × 14.7 × 8.7 in'], newest:true, discount:21 },
+  { id:10, name:'Brother HL-L3270CDW', brand:'Brother', cat:'laser', price:279.99, oldPrice:329.99, rating:4.6, reviews:167, badge:'', badgeColor:'', color:'#fffbeb', iconColor:'#d97706', features:['wireless','color','duplex'], ppm:25, desc:'Compact color laser printer with wireless networking and auto duplex. Crisp color output for presentations and reports.', specs:['Print Speed: 25 ppm color','Resolution: 2400×600 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 250 sheets','Dimensions: 16.1 × 16.1 × 9.1 in'], newest:false, discount:15 },
+  { id:11, name:'Xerox B210 Monochrome', brand:'Xerox', cat:'laser', price:129.99, oldPrice:159.99, rating:4.4, reviews:89, badge:'', badgeColor:'', color:'#f8fafc', iconColor:'#64748b', features:['wireless','duplex'], ppm:31, desc:'Compact monochrome laser with Wi-Fi and mobile printing. Reliable everyday printing for home and small offices.', specs:['Print Speed: 31 ppm','Resolution: 1200×1200 dpi','Connectivity: Wi-Fi, USB','Paper Capacity: 250 sheets','Dimensions: 13.9 × 13.9 × 7.7 in'], newest:false, discount:19 },
+  { id:12, name:'Canon PIXMA G620', brand:'Canon', cat:'inkjet', price:199.99, oldPrice:229.99, rating:4.7, reviews:142, badge:'NEW', badgeColor:'green', color:'#f1f5f9', iconColor:'#475569', features:['wireless','color','mobile'], ppm:3.9, desc:'MegaTank photo printer with 6-color dye ink system. Print borderless 4×6 photos for less than 4 cents each.', specs:['Print Speed: 3.9 ipm color','Resolution: 4800×1200 dpi','Connectivity: Wi-Fi, USB','Paper Capacity: 100 sheets','Dimensions: 17.5 × 13.1 × 5.9 in'], newest:true, discount:13 },
+  { id:13, name:'HP 65XL Black Ink', brand:'HP', cat:'ink', price:24.99, oldPrice:29.99, rating:4.8, reviews:892, badge:'', badgeColor:'', color:'#dce6ff', iconColor:'#1447c0', features:[], ppm:null, desc:'High-yield black ink cartridge for HP DeskJet and Envy printers. Up to 300 pages per cartridge.', specs:['Pages: ~300','Color: Black','Yield: High','Compatible: HP DeskJet 2600, 3700, Envy 5000'], newest:false, discount:17 },
+  { id:14, name:'Canon PG-245XL Black', brand:'Canon', cat:'ink', price:19.99, oldPrice:24.99, rating:4.7, reviews:634, badge:'', badgeColor:'', color:'#f1f5f9', iconColor:'#475569', features:[], ppm:null, desc:'High-yield black ink cartridge for Canon PIXMA printers. Genuine OEM cartridge for best results.', specs:['Pages: ~300','Color: Black','Yield: High','Compatible: Canon PIXMA MG2520, MG2522, MG2525'], newest:false, discount:20 },
+  { id:15, name:'Brother TN760 Toner', brand:'Brother', cat:'ink', price:49.99, oldPrice:64.99, rating:4.9, reviews:445, badge:'BEST VALUE', badgeColor:'amber', color:'#fffbeb', iconColor:'#d97706', features:[], ppm:null, desc:'High-yield black toner cartridge for Brother laser printers. Up to 3,000 pages per cartridge.', specs:['Pages: ~3,000','Color: Black','Yield: High','Compatible: Brother HL-L2350DW, MFC-L2710DW'], newest:false, discount:23 },
+  { id:16, name:'Epson 502XL Color Set', brand:'Epson', cat:'ink', price:39.99, oldPrice:49.99, rating:4.6, reviews:278, badge:'', badgeColor:'', color:'#ecfdf5', iconColor:'#059669', features:[], ppm:null, desc:'High-yield color ink multipack for Epson WorkForce printers. Includes cyan, magenta, yellow cartridges.', specs:['Pages: ~470 per color','Colors: C/M/Y','Yield: High','Compatible: Epson WF-2860, ET-3760'], newest:false, discount:20 },
+  { id:17, name:'Epson EcoTank ET-4850', brand:'Epson', cat:'allinone', price:349.99, oldPrice:449.99, rating:4.8, reviews:203, badge:'SALE', badgeColor:'red', color:'#ecfdf5', iconColor:'#059669', features:['wireless','color','duplex','mobile'], ppm:15, desc:'All-in-one supertank with fax, ADF, and voice-activated printing. Up to 2 years of ink included.', specs:['Print Speed: 15 ipm mono','Resolution: 5760×1440 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 250 sheets','Dimensions: 14.8 × 22.0 × 9.8 in'], newest:false, discount:22 },
+  { id:18, name:'HP Color LaserJet Pro M255dw', brand:'HP', cat:'laser', price:319.99, oldPrice:399.99, rating:4.7, reviews:134, badge:'', badgeColor:'', color:'#dce6ff', iconColor:'#1447c0', features:['wireless','color','duplex'], ppm:22, desc:'Fast color laser printer with automatic duplex and wireless. Ideal for small businesses needing vibrant color output.', specs:['Print Speed: 22 ppm color','Resolution: 600×600 dpi','Connectivity: Wi-Fi, Ethernet, USB','Paper Capacity: 250 sheets','Dimensions: 15.9 × 16.3 × 9.9 in'], newest:true, discount:20 },
+];
+
+// ===== STATE =====
+let cart = [];
+let currentView = 'grid';
+let wishlist = new Set();
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('cat') || 'all';
+  if (cat !== 'all') {
+    const radio = document.querySelector(`input[name="cat"][value="${cat}"]`);
+    if (radio) radio.checked = true;
+  }
+  applyFilters();
+});
+</script>
+
+<script>
+// ===== FILTER & RENDER =====
+function applyFilters() {
+  const cat = document.querySelector('input[name="cat"]:checked')?.value || 'all';
+  const maxPrice = parseFloat(document.getElementById('price-max').value) || 600;
+  const fromPrice = parseFloat(document.getElementById('price-from').value) || 0;
+  const toPrice = parseFloat(document.getElementById('price-to').value) || maxPrice;
+  const minRating = parseFloat(document.querySelector('input[name="rating"]:checked')?.value) || 0;
+  const brands = [...document.querySelectorAll('.brand-cb:checked')].map(c => c.value);
+  const feats = [...document.querySelectorAll('.feat-cb:checked')].map(c => c.value);
+  const saleOnly = document.getElementById('sale-only').checked;
+  const search = document.getElementById('search-input').value.toLowerCase().trim();
+  const sort = document.getElementById('sort-select').value;
+
+  let filtered = PRODUCTS.filter(p => {
+    if (cat !== 'all' && p.cat !== cat) return false;
+    if (p.price > Math.min(maxPrice, toPrice)) return false;
+    if (p.price < fromPrice) return false;
+    if (p.rating < minRating) return false;
+    if (brands.length && !brands.includes(p.brand)) return false;
+    if (feats.length && !feats.every(f => p.features.includes(f))) return false;
+    if (saleOnly && !p.badge.includes('SALE') && !p.badge.includes('DEAL')) return false;
+    if (search && !p.name.toLowerCase().includes(search) && !p.brand.toLowerCase().includes(search) && !p.cat.includes(search)) return false;
+    return true;
+  });
+
+  // Sort
+  if (sort === 'price-asc') filtered.sort((a,b) => a.price - b.price);
+  else if (sort === 'price-desc') filtered.sort((a,b) => b.price - a.price);
+  else if (sort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
+  else if (sort === 'newest') filtered.sort((a,b) => b.newest - a.newest);
+  else if (sort === 'discount') filtered.sort((a,b) => b.discount - a.discount);
+
+  // Update title
+  const catLabels = {all:'All Printers',inkjet:'Inkjet Printers',laser:'Laser Printers',allinone:'All-in-One Printers',business:'Business Printers',ink:'Ink & Toner',deals:'Flash Deals'};
+  document.getElementById('page-title').textContent = catLabels[cat] || 'All Printers';
+  document.getElementById('breadcrumb-cat').textContent = catLabels[cat] || 'All Printers';
+  document.getElementById('result-count').textContent = `Showing ${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+
+  renderProducts(filtered);
+  renderChips(cat, brands, feats, saleOnly, search);
+}
+
+function renderProducts(list) {
+  const grid = document.getElementById('product-grid');
+  const empty = document.getElementById('empty-state');
+  if (!list.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  if (currentView === 'grid') {
+    grid.className = 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5';
+    grid.innerHTML = list.map(p => gridCard(p)).join('');
+  } else {
+    grid.className = 'flex flex-col gap-4';
+    grid.innerHTML = list.map(p => listCard(p)).join('');
+  }
+}
+
+function starsHtml(r) {
+  const full = Math.floor(r);
+  const half = r % 1 >= 0.5;
+  let s = '';
+  for (let i=0;i<full;i++) s += '<i class="ri-star-fill"></i>';
+  if (half) s += '<i class="ri-star-half-fill"></i>';
+  for (let i=full+(half?1:0);i<5;i++) s += '<i class="ri-star-line"></i>';
+  return s;
+}
+
+function badgeCls(c) {
+  return {red:'bg-red-500',green:'bg-emerald-500',amber:'bg-amber2-500',navy:'bg-navy-600'}[c] || 'bg-slate-500';
+}
+
+function gridCard(p) {
+  const saved = p.oldPrice ? (p.oldPrice - p.price).toFixed(2) : null;
+  const wl = wishlist.has(p.id);
+  return `
+  <div class="card-lift bg-white border border-slate-200 rounded-2xl overflow-hidden group relative">
+    <!-- Image area -->
+    <div class="relative h-48 flex items-center justify-center p-6" style="background:${p.color}">
+      <i class="ri-${p.cat==='ink'?'ink-bottle':'printer'}-fill transition-transform duration-300 group-hover:scale-110" style="font-size:90px;color:${p.iconColor};line-height:1"></i>
+      ${p.badge ? `<span class="absolute top-3 left-3 ${badgeCls(p.badgeColor)} text-white text-[10px] font-bold px-2 py-0.5 rounded-md ${p.badgeColor==='red'?'badge-pulse':''}">${p.badge}</span>` : ''}
+      <button onclick="toggleWishlist(${p.id},this)" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow transition">
+        <i class="${wl?'ri-heart-fill text-red-500':'ri-heart-3-line text-slate-400 hover:text-red-400'} text-base"></i>
+      </button>
+      <!-- Quick view on hover -->
+      <div class="absolute inset-x-0 bottom-0 flex justify-center pb-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-2 group-hover:translate-y-0">
+        <button onclick="openQV(${p.id})" class="bg-white/90 backdrop-blur-sm text-navy-700 text-xs font-bold px-4 py-1.5 rounded-full shadow-lg hover:bg-navy-600 hover:text-white transition flex items-center gap-1.5">
+          <i class="ri-eye-line"></i> Quick View
+        </button>
+      </div>
+    </div>
+    <!-- Info -->
+    <div class="p-4">
+      <div class="flex items-center justify-between mb-0.5">
+        <p class="text-[10px] font-bold uppercase tracking-widest" style="color:${p.iconColor}">${p.brand}</p>
+        ${p.newest ? '<span class="text-[10px] bg-navy-50 text-navy-600 font-bold px-1.5 py-0.5 rounded">NEW</span>' : ''}
+      </div>
+      <h3 class="font-bold text-slate-800 text-sm leading-snug">${p.name}</h3>
+      <p class="text-xs text-slate-400 mt-0.5 capitalize">${p.cat === 'allinone' ? 'All-in-One' : p.cat === 'ink' ? 'Ink & Toner' : p.cat.charAt(0).toUpperCase()+p.cat.slice(1)}</p>
+      <!-- Stars -->
+      <div class="flex items-center gap-1 mt-2 text-amber2-400 text-xs">
+        ${starsHtml(p.rating)}
+        <span class="text-slate-400 ml-1">(${p.reviews})</span>
+      </div>
+      <!-- Features -->
+      <div class="flex flex-wrap gap-1 mt-2">
+        ${p.features.slice(0,3).map(f => `<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-medium capitalize">${f}</span>`).join('')}
+      </div>
+      <!-- Price -->
+      <div class="flex items-baseline gap-2 mt-3">
+        <span class="text-lg font-black text-slate-800">$${p.price.toFixed(2)}</span>
+        ${p.oldPrice ? `<span class="text-xs text-slate-400 line-through">$${p.oldPrice.toFixed(2)}</span>` : ''}
+        ${saved ? `<span class="text-xs text-emerald-600 font-bold">Save $${saved}</span>` : ''}
+      </div>
+      <!-- CTA -->
+      <div class="flex gap-2 mt-3">
+        <button onclick="addToCart('${p.name.replace(/'/g,"\\'")}',${p.price})" class="flex-1 bg-navy-600 hover:bg-navy-700 text-white font-semibold py-2 rounded-xl transition text-xs flex items-center justify-center gap-1.5">
+          <i class="ri-shopping-cart-add-line"></i> Add to Cart
+        </button>
+        <a href="product-detail.html?id=${p.id}" class="w-9 h-9 border border-slate-200 hover:border-navy-500 hover:text-navy-600 rounded-xl flex items-center justify-center text-slate-400 transition" data-tip="View Details">
+          <i class="ri-eye-line text-sm"></i>
+        </a>
+      </div>
+      <a href="product-detail.html?id=${p.id}" class="block text-center text-xs text-navy-600 hover:underline mt-2 font-semibold">View Full Details →</a>
+    </div>
+  </div>`;
+}
+
+function listCard(p) {
+  const saved = p.oldPrice ? (p.oldPrice - p.price).toFixed(2) : null;
+  const wl = wishlist.has(p.id);
+  return `
+  <div class="card-lift bg-white border border-slate-200 rounded-2xl overflow-hidden flex gap-0">
+    <div class="w-40 sm:w-52 shrink-0 flex items-center justify-center p-5 relative" style="background:${p.color}">
+      <i class="ri-${p.cat==='ink'?'ink-bottle':'printer'}-fill" style="font-size:70px;color:${p.iconColor};line-height:1"></i>
+      ${p.badge ? `<span class="absolute top-2 left-2 ${badgeCls(p.badgeColor)} text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">${p.badge}</span>` : ''}
+    </div>
+    <div class="flex-1 p-5 flex flex-col justify-between">
+      <div>
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color:${p.iconColor}">${p.brand}</p>
+            <h3 class="font-bold text-slate-800">${p.name}</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed max-w-lg">${p.desc}</p>
+          </div>
+          <button onclick="toggleWishlist(${p.id},this)" class="shrink-0 w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:border-red-300 transition">
+            <i class="${wl?'ri-heart-fill text-red-500':'ri-heart-3-line text-slate-400'} text-sm"></i>
+          </button>
+        </div>
+        <div class="flex items-center gap-1 mt-2 text-amber2-400 text-xs">
+          ${starsHtml(p.rating)}<span class="text-slate-400 ml-1">(${p.reviews})</span>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          ${p.features.map(f => `<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-medium capitalize">${f}</span>`).join('')}
+        </div>
+      </div>
+      <div class="flex items-center justify-between mt-4 flex-wrap gap-3">
+        <div class="flex items-baseline gap-2">
+          <span class="text-xl font-black text-slate-800">$${p.price.toFixed(2)}</span>
+          ${p.oldPrice ? `<span class="text-sm text-slate-400 line-through">$${p.oldPrice.toFixed(2)}</span>` : ''}
+          ${saved ? `<span class="text-xs text-emerald-600 font-bold">Save $${saved}</span>` : ''}
+        </div>
+        <div class="flex gap-2">
+          <button onclick="openQV(${p.id})" class="border border-slate-200 hover:border-navy-500 text-slate-500 hover:text-navy-600 font-semibold px-4 py-2 rounded-xl transition text-xs flex items-center gap-1.5">
+            <i class="ri-eye-line"></i> Quick View
+          </button>
+          <a href="product-detail.html?id=${p.id}" class="border border-navy-200 bg-navy-50 hover:bg-navy-100 text-navy-700 font-semibold px-4 py-2 rounded-xl transition text-xs flex items-center gap-1.5">
+            <i class="ri-information-line"></i> Details
+          </a>
+          <button onclick="addToCart('${p.name.replace(/'/g,"\\'")}',${p.price})" class="bg-navy-600 hover:bg-navy-700 text-white font-semibold px-5 py-2 rounded-xl transition text-xs flex items-center gap-1.5">
+            <i class="ri-shopping-cart-add-line"></i> Add to Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+</script>
+
+<script>
+// ===== QUICK VIEW =====
+function openQV(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  const saved = p.oldPrice ? (p.oldPrice - p.price).toFixed(2) : null;
+  document.getElementById('qv-content').innerHTML = `
+    <div class="flex flex-col md:flex-row gap-8">
+      <div class="md:w-64 shrink-0 rounded-2xl flex items-center justify-center p-8 h-56 md:h-auto" style="background:${p.color}">
+        <i class="ri-${p.cat==='ink'?'ink-bottle':'printer'}-fill" style="font-size:110px;color:${p.iconColor};line-height:1"></i>
+      </div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs font-bold uppercase tracking-widest" style="color:${p.iconColor}">${p.brand}</span>
+          ${p.badge ? `<span class="${badgeCls(p.badgeColor)} text-white text-[10px] font-bold px-2 py-0.5 rounded-md">${p.badge}</span>` : ''}
+        </div>
+        <h2 class="text-2xl font-black text-slate-800">${p.name}</h2>
+        <div class="flex items-center gap-1 mt-2 text-amber2-400 text-sm">
+          ${starsHtml(p.rating)}<span class="text-slate-400 text-xs ml-1">${p.rating} · ${p.reviews} reviews</span>
+        </div>
+        <p class="text-slate-500 text-sm mt-3 leading-relaxed">${p.desc}</p>
+        <!-- Specs -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          ${p.specs.map(s => `<div class="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-1.5"><i class="ri-checkbox-circle-line text-navy-500"></i>${s}</div>`).join('')}
+        </div>
+        <!-- Features -->
+        <div class="flex flex-wrap gap-1.5 mt-3">
+          ${p.features.map(f => `<span class="text-xs bg-navy-50 text-navy-700 font-semibold px-2.5 py-1 rounded-full capitalize flex items-center gap-1"><i class="ri-check-line"></i>${f}</span>`).join('')}
+        </div>
+        <!-- Price + CTA -->
+        <div class="mt-5 flex items-center gap-3 flex-wrap">
+          <span class="text-3xl font-black text-slate-800">$${p.price.toFixed(2)}</span>
+          ${p.oldPrice ? `<span class="text-base text-slate-400 line-through">$${p.oldPrice.toFixed(2)}</span>` : ''}
+          ${saved ? `<span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded-lg">Save $${saved}</span>` : ''}
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button onclick="addToCart('${p.name.replace(/'/g,"\\'")}',${p.price});closeQV()" class="flex-1 bg-navy-600 hover:bg-navy-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+            <i class="ri-shopping-cart-add-line"></i> Add to Cart
+          </button>
+          <button onclick="toggleWishlist(${p.id},this)" class="w-12 h-12 border-2 border-slate-200 hover:border-red-400 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition">
+            <i class="${wishlist.has(p.id)?'ri-heart-fill text-red-500':'ri-heart-3-line'} text-lg"></i>
+          </button>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+          <span class="flex items-center gap-1"><i class="ri-truck-line text-navy-500"></i> Free shipping $99+</span>
+          <span class="flex items-center gap-1"><i class="ri-shield-check-line text-navy-500"></i> 2-Year Warranty</span>
+          <span class="flex items-center gap-1"><i class="ri-refresh-line text-navy-500"></i> 30-Day Returns</span>
+        </div>
+      </div>
+    </div>`;
+  const modal = document.getElementById('qv-modal');
+  const inner = document.getElementById('qv-inner');
+  modal.classList.remove('opacity-0','pointer-events-none');
+  setTimeout(() => { inner.classList.remove('scale-95','opacity-0'); }, 10);
+  document.body.style.overflow = 'hidden';
+}
+
+function closeQV() {
+  const modal = document.getElementById('qv-modal');
+  const inner = document.getElementById('qv-inner');
+  inner.classList.add('scale-95','opacity-0');
+  setTimeout(() => { modal.classList.add('opacity-0','pointer-events-none'); document.body.style.overflow = ''; }, 220);
+}
+
+// ===== WISHLIST =====
+function toggleWishlist(id, btn) {
+  if (wishlist.has(id)) {
+    wishlist.delete(id);
+    showToast('Removed from wishlist');
+  } else {
+    wishlist.add(id);
+    showToast('Added to wishlist ❤️');
+  }
+  applyFilters();
+}
+
+// ===== VIEW TOGGLE =====
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-grid').className = v==='grid' ? 'px-3 py-2 bg-navy-600 text-white transition' : 'px-3 py-2 bg-white text-slate-400 hover:text-navy-600 transition';
+  document.getElementById('btn-list').className = v==='list' ? 'px-3 py-2 bg-navy-600 text-white transition' : 'px-3 py-2 bg-white text-slate-400 hover:text-navy-600 transition';
+  applyFilters();
+}
+
+// ===== PRICE LABEL =====
+function updatePriceLabel() {
+  document.getElementById('price-max-label').textContent = document.getElementById('price-max').value;
+}
+
+// ===== CLEAR FILTERS =====
+function clearAllFilters() {
+  document.querySelector('input[name="cat"][value="all"]').checked = true;
+  document.getElementById('price-max').value = 600;
+  document.getElementById('price-from').value = '';
+  document.getElementById('price-to').value = '';
+  document.getElementById('price-max-label').textContent = '600';
+  document.querySelectorAll('.brand-cb').forEach(c => c.checked = false);
+  document.querySelectorAll('.feat-cb').forEach(c => c.checked = false);
+  document.querySelector('input[name="rating"][value="0"]').checked = true;
+  document.getElementById('sale-only').checked = false;
+  document.getElementById('search-input').value = '';
+  applyFilters();
+}
+
+// ===== ACTIVE CHIPS =====
+function renderChips(cat, brands, feats, saleOnly, search) {
+  const wrap = document.getElementById('active-chips');
+  const chips = [];
+  if (cat !== 'all') chips.push(`<span class="chip">${cat} <button onclick="document.querySelector('input[name=cat][value=all]').checked=true;applyFilters()" class="ml-1 hover:text-red-500"><i class="ri-close-line"></i></button></span>`);
+  brands.forEach(b => chips.push(`<span class="chip">${b} <button onclick="document.querySelector('.brand-cb[value=${b}]').checked=false;applyFilters()" class="ml-1 hover:text-red-500"><i class="ri-close-line"></i></button></span>`));
+  feats.forEach(f => chips.push(`<span class="chip">${f} <button onclick="document.querySelector('.feat-cb[value=${f}]').checked=false;applyFilters()" class="ml-1 hover:text-red-500"><i class="ri-close-line"></i></button></span>`));
+  if (saleOnly) chips.push(`<span class="chip">On Sale <button onclick="document.getElementById('sale-only').checked=false;applyFilters()" class="ml-1 hover:text-red-500"><i class="ri-close-line"></i></button></span>`);
+  if (search) chips.push(`<span class="chip">"${search}" <button onclick="document.getElementById('search-input').value='';applyFilters()" class="ml-1 hover:text-red-500"><i class="ri-close-line"></i></button></span>`);
+  if (chips.length) {
+    wrap.innerHTML = chips.join('') + `<button onclick="clearAllFilters()" class="text-xs text-red-500 font-semibold hover:underline ml-1">Clear all</button>`;
+    wrap.classList.remove('hidden');
+  } else {
+    wrap.classList.add('hidden');
+  }
+}
+
+// ===== MOBILE FILTER =====
+function toggleMobileFilter() {
+  const drawer = document.getElementById('mob-filter-drawer');
+  const overlay = document.getElementById('mob-filter-overlay');
+  const open = !drawer.classList.contains('translate-y-full');
+  drawer.classList.toggle('translate-y-full', open);
+  overlay.classList.toggle('hidden', open);
+}
+
+function setCatMob(val) {
+  const radio = document.querySelector(`input[name="cat"][value="${val}"]`);
+  if (radio) { radio.checked = true; applyFilters(); }
+}
+
+// ===== CART =====
+function toggleCart() {
+  const s = document.getElementById('cart-sidebar');
+  const o = document.getElementById('cart-overlay');
+  const open = !s.classList.contains('translate-x-full');
+  s.classList.toggle('translate-x-full', open);
+  o.classList.toggle('hidden', open);
+}
+
+function addToCart(name, price) {
+  const ex = cart.find(i => i.name === name);
+  ex ? ex.qty++ : cart.push({ name, price, qty:1 });
+  renderCart();
+  showToast(`${name.split(' ').slice(0,3).join(' ')} added to cart!`);
+}
+
+function removeFromCart(name) {
+  cart = cart.filter(i => i.name !== name);
+  renderCart();
+}
+
+function renderCart() {
+  const el = document.getElementById('cart-items');
+  const cnt = document.getElementById('cart-count');
+  const tot = document.getElementById('cart-total');
+  const total = cart.reduce((s,i) => s + i.price * i.qty, 0);
+  const count = cart.reduce((s,i) => s + i.qty, 0);
+  cnt.textContent = count;
+  tot.textContent = '$' + total.toFixed(2);
+  if (!cart.length) {
+    el.innerHTML = `<div class="text-center mt-12"><i class="ri-shopping-cart-2-line text-slate-200 text-5xl"></i><p class="text-slate-400 text-sm mt-3">Your cart is empty</p></div>`;
+    return;
+  }
+  el.innerHTML = cart.map(item => `
+    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+      <div class="bg-navy-50 rounded-lg p-2 shrink-0"><i class="ri-printer-fill text-navy-600 text-lg"></i></div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-slate-800 truncate">${item.name}</p>
+        <p class="text-xs text-slate-400">Qty: ${item.qty} × $${item.price.toFixed(2)}</p>
+      </div>
+      <div class="text-right shrink-0">
+        <p class="text-sm font-bold text-navy-600">$${(item.price*item.qty).toFixed(2)}</p>
+        <button onclick="removeFromCart('${item.name}')" class="text-red-400 hover:text-red-600 text-xs mt-0.5">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.remove('opacity-0','translate-y-4');
+  t.classList.add('opacity-100','translate-y-0');
+  setTimeout(() => { t.classList.add('opacity-0','translate-y-4'); t.classList.remove('opacity-100','translate-y-0'); }, 2500);
+}
+
+// Close QV on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQV(); });
+</script>
+
+<!-- FOOTER -->
+<footer class="bg-slate-900 text-slate-400 pt-14 pb-8 px-5 mt-10">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+    <div>
+      <div class="flex items-center gap-2.5 mb-4">
+        <div class="bg-navy-600 rounded-xl w-9 h-9 flex items-center justify-center shrink-0"><i class="ri-printer-fill text-white text-base"></i></div>
+        <div><span class="text-base font-black text-white">Geek</span><span class="text-base font-black text-amber2-400">Support</span><span class="text-base font-black text-slate-300">Sales</span></div>
+      </div>
+      <p class="text-sm leading-relaxed text-slate-500">Your trusted source for printers, ink, toner, and expert tech support.</p>
+      <div class="flex gap-2 mt-5">
+        <a href="#" class="bg-slate-800 hover:bg-navy-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-facebook-fill text-sm"></i></a>
+        <a href="#" class="bg-slate-800 hover:bg-navy-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-twitter-x-line text-sm"></i></a>
+        <a href="#" class="bg-slate-800 hover:bg-navy-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-instagram-line text-sm"></i></a>
+      </div>
+    </div>
+    <div>
+      <h4 class="text-white font-bold text-sm mb-4">Categories</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="products.html?cat=inkjet" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Inkjet Printers</a></li>
+        <li><a href="products.html?cat=laser" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Laser Printers</a></li>
+        <li><a href="products.html?cat=allinone" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> All-in-One</a></li>
+        <li><a href="products.html?cat=business" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Business</a></li>
+        <li><a href="products.html?cat=ink" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Ink & Toner</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="text-white font-bold text-sm mb-4">Support</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="contact.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Setup Help</a></li>
+        <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Driver Downloads</a></li>
+        <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Track My Order</a></li>
+        <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Returns</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="text-white font-bold text-sm mb-4">Contact</h4>
+      <ul class="space-y-2 text-sm">
+        <li class="flex items-center gap-2"><i class="ri-phone-line text-navy-400"></i> 1-800-GEEK-PRN</li>
+        <li class="flex items-center gap-2"><i class="ri-mail-line text-navy-400"></i> support@geeksupportsales.com</li>
+        <li class="flex items-center gap-2"><i class="ri-time-line text-navy-400"></i> Mon–Fri 8am–8pm EST</li>
+      </ul>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-600">
+    <p>© 2025 GeekSupportSales LLC. All rights reserved.</p>
+    <div class="flex items-center gap-3 text-slate-500 text-xl">
+      <i class="ri-visa-line"></i><i class="ri-mastercard-line"></i><i class="ri-paypal-line"></i><i class="ri-apple-line"></i>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
