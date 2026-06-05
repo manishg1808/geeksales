@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# /admin -> admin panel
+RewriteRule ^admin/?$ admin/index.php [L]
+RewriteRule ^admin/login/?$ admin/login.php [L]
+RewriteRule ^admin/logout/?$ admin/logout.php [L]

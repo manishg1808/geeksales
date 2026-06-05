@@ -1,0 +1,29 @@
+# GeekSales API – Apache Configuration
+# Place this file at /api/.htaccess
+
+# Allow all origins for API access (restrict in production)
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Accept, Authorization"
+</IfModule>
+
+# Handle OPTIONS pre-flight requests
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=204,L]
+
+# Block directory listing
+Options -Indexes
+
+# Only allow .php files to be served
+<Files ~ "^(?!.*\.php$)">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Allow access to PHP endpoint files
+<FilesMatch "^(leads|orders|products)\.php$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

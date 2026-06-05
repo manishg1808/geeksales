@@ -1,3 +1,8 @@
+<?php
+// Backend logic has been moved to api/leads.php
+// This file now serves only the frontend HTML.
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,24 +15,26 @@
       theme: {
         extend: {
           colors: {
-            navy:  { 50:'#f0f4ff', 100:'#dce6ff', 200:'#b9ccff', 300:'#8aaaff', 400:'#5580ff', 500:'#1a56db', 600:'#1447c0', 700:'#0f389e', 800:'#0c2d7e', 900:'#0a2260' },
-            slate2:{ 50:'#f8fafc', 100:'#f1f5f9', 200:'#e2e8f0', 700:'#334155', 800:'#1e293b', 900:'#0f172a' },
-            amber2:{ 400:'#fbbf24', 500:'#f59e0b', 600:'#d97706' },
+            navy:  { 50:'#F8FAFC',100:'#F1F5F9',200:'#E5E7EB',300:'#CBD5E1',400:'#6B7280',500:'#2563EB',600:'#2563EB',700:'#1D4ED8',800:'#0F172A',900:'#0F172A' },
+            slate2:{ 50:'#F8FAFC', 100:'#F1F5F9', 200:'#E5E7EB', 700:'#6B7280', 800:'#111827', 900:'#0F172A' },
+            amber2:{ 50:'#FFF7ED',100:'#FFEDD5',200:'#FED7AA',300:'#FDBA74',400:'#FB923C',500:'#F97316',600:'#EA580C',700:'#C2410C',800:'#9A3412',900:'#7C2D12' },
           },
-          fontFamily: { sans: ['Inter','system-ui','sans-serif'] },
+          fontFamily: { sans: ['Raleway','system-ui','sans-serif'] },
         }
       }
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
   <style>
     html{scroll-behavior:smooth}
-    .hero-bg{background:linear-gradient(135deg,#0a2260 0%,#1447c0 55%,#1a56db 100%)}
-    .section-label{letter-spacing:.12em;font-size:.7rem;font-weight:700;text-transform:uppercase;color:#1447c0}
+    .brand-gradient,.hero-bg{background:#2563EB}
+    .btn-gradient{background:#F97316;color:#fff}
+    .btn-gradient:hover{filter:brightness(1.05);box-shadow:0 10px 24px rgba(249,115,22,.24)}
+    .section-label{letter-spacing:.12em;font-size:.7rem;font-weight:700;text-transform:uppercase;color:#1e293b}
     .card-lift{transition:transform .22s ease,box-shadow .22s ease}
-    .card-lift:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(20,71,192,.12)}
-    input:focus,textarea:focus,select:focus{outline:none;border-color:#1447c0;box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+    .card-lift:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(30,41,59,.12)}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:#1e293b;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
     .ticker-wrap{overflow:hidden;white-space:nowrap}
     .ticker-inner{display:inline-block;animation:ticker 35s linear infinite}
     @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -35,76 +42,88 @@
 </head>
 <body class="font-sans bg-slate-50 text-slate-800 antialiased">
 
-<!-- ======= ANNOUNCEMENT BAR ======= -->
-<div class="bg-navy-800 text-white text-xs font-medium py-2 ticker-wrap">
-  <div class="ticker-inner">
-    &nbsp;&nbsp;<i class="ri-truck-line mr-1"></i>Free Shipping on orders over $99&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-tools-line mr-1"></i>Free Expert Setup on Every Printer&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-price-tag-3-line mr-1"></i>Best Price Guarantee&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-customer-service-2-line mr-1"></i>24/7 Tech Support: 1-800-GEEK-PRN&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-shield-check-line mr-1"></i>2-Year Warranty Included&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-truck-line mr-1"></i>Free Shipping on orders over $99&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-tools-line mr-1"></i>Free Expert Setup on Every Printer&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-price-tag-3-line mr-1"></i>Best Price Guarantee&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-customer-service-2-line mr-1"></i>24/7 Tech Support: 1-800-GEEK-PRN&nbsp;&nbsp;·&nbsp;&nbsp;
-    <i class="ri-shield-check-line mr-1"></i>2-Year Warranty Included&nbsp;&nbsp;&nbsp;
+<!-- ======= TOP BAR ======= -->
+<div class="brand-gradient text-white hidden md:block">
+  <div class="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between text-xs">
+    <div class="ticker-wrap flex-1 max-w-xl overflow-hidden">
+      <div class="ticker-inner text-slate-300">
+        &nbsp;&nbsp;<i class="ri-truck-line mr-1"></i>Free Shipping on orders over $99&nbsp;&nbsp;·&nbsp;&nbsp;
+        <i class="ri-tools-line mr-1"></i>Free Expert Setup on Every Printer&nbsp;&nbsp;·&nbsp;&nbsp;
+        <i class="ri-price-tag-3-line mr-1"></i>Best Price Guarantee&nbsp;&nbsp;·&nbsp;&nbsp;
+        <i class="ri-shield-check-line mr-1"></i>2-Year Warranty Included&nbsp;&nbsp;·&nbsp;&nbsp;
+        <i class="ri-truck-line mr-1"></i>Free Shipping on orders over $99&nbsp;&nbsp;·&nbsp;&nbsp;
+        <i class="ri-tools-line mr-1"></i>Free Expert Setup on Every Printer&nbsp;&nbsp;&nbsp;
+      </div>
+    </div>
+    <div class="flex items-center gap-5 shrink-0 ml-6">
+      <a href="tel:8019511533" class="flex items-center gap-1.5 text-slate-300 hover:text-white transition">
+        <i class="ri-phone-fill text-amber2-400"></i>
+        <span class="font-medium">8019511533</span>
+      </a>
+      <span class="w-px h-3 bg-slate-600"></span>
+      <a href="mailto:support@geeksupportsales.com" class="flex items-center gap-1.5 text-slate-300 hover:text-white transition">
+        <i class="ri-mail-fill text-amber2-400"></i>
+        <span class="font-medium">support@geeksupportsales.com</span>
+      </a>
+    </div>
   </div>
 </div>
 
 <!-- ======= NAVBAR ======= -->
-<header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-  <div class="max-w-7xl mx-auto px-5 py-3 flex items-center gap-6">
-    <a href="index.html" class="flex items-center gap-2.5 shrink-0">
-      <div class="bg-navy-600 rounded-xl w-10 h-10 flex items-center justify-center">
-        <i class="ri-printer-fill text-white text-xl"></i>
+<header class="bg-white border-b border-slate-100 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center gap-8">
+
+    <!-- Logo -->
+    <a href="index.php" class="flex items-center gap-2.5 shrink-0">
+      <div class="bg-navy-600 rounded-lg w-8 h-8 flex items-center justify-center">
+        <i class="ri-printer-fill text-white text-sm"></i>
       </div>
-      <div class="leading-tight">
-        <div class="text-[1.1rem] font-black tracking-tight">
-          <span class="text-navy-600">Geek</span><span class="text-amber2-500">Support</span><span class="text-slate-700">Sales</span>
-        </div>
-        <div class="text-[10px] text-slate-400 font-medium">Your Printer Experts</div>
-      </div>
+      <span class="text-[15px] font-black tracking-tight leading-none">
+        <span class="text-navy-600">Geek</span><span class="text-amber2-500">Support</span><span class="text-slate-800">Sales</span>
+      </span>
     </a>
 
-    <div class="hidden md:flex flex-1 max-w-lg">
-      <div class="flex w-full rounded-xl border border-slate-200 overflow-hidden bg-slate-50 focus-within:border-navy-500 focus-within:bg-white transition">
-        <input type="text" placeholder="Search printers, ink, toner, brand…" class="flex-1 px-4 py-2.5 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400"/>
-        <button class="bg-navy-600 hover:bg-navy-700 px-4 text-white transition">
+    <!-- Nav Links -->
+    <nav class="hidden lg:flex items-center gap-1">
+      <a href="products.php" class="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-navy-600 hover:bg-navy-50 rounded-lg transition">Products</a>
+      <a href="support.php" class="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-navy-600 hover:bg-navy-50 rounded-lg transition">Support</a>
+      <a href="contact.php" class="px-3 py-1.5 text-sm font-semibold text-navy-600 bg-navy-50 rounded-lg">Contact</a>
+    </nav>
+
+    <!-- Search -->
+    <div class="hidden md:flex flex-1 max-w-sm ml-auto">
+      <div class="flex w-full h-9 rounded-lg border border-slate-200 bg-slate-50 hover:border-slate-300 focus-within:border-navy-400 focus-within:bg-white overflow-hidden transition">
+        <input type="text" placeholder="Search printers, ink, toner…" class="flex-1 px-3 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400"/>
+        <button class="px-3 text-slate-400 hover:text-navy-600 transition">
           <i class="ri-search-2-line text-base"></i>
         </button>
       </div>
     </div>
 
-    <nav class="hidden lg:flex items-center gap-5 text-sm font-semibold text-slate-600">
-      <a href="index.html" class="hover:text-navy-600 transition">Home</a>
-      <a href="index.html#products" class="hover:text-navy-600 transition">Products</a>
-      <a href="index.html#deals" class="hover:text-navy-600 transition">Deals</a>
-      <a href="contact.html" class="text-navy-600 border-b-2 border-navy-600 pb-0.5">Contact</a>
-    </nav>
+    <!-- Divider -->
+    <div class="hidden sm:block w-px h-6 bg-slate-200 shrink-0"></div>
 
-    <div class="flex items-center gap-3 ml-auto">
-      <button class="text-slate-500 hover:text-navy-600 transition hidden sm:block">
-        <i class="ri-heart-3-line text-xl"></i>
+    <!-- Actions -->
+    <div class="flex items-center gap-1 shrink-0">
+      <button onclick="toggleWishlistDrawer()" class="relative w-9 h-9 flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+        <i class="ri-heart-3-line text-[18px]"></i>
+        <span id="wl-count" class="absolute top-0.5 right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] px-0.5 items-center justify-center hidden leading-none"></span>
       </button>
-      <a href="index.html" class="relative text-slate-500 hover:text-navy-600 transition">
-        <i class="ri-shopping-cart-2-line text-xl"></i>
-      </a>
-      <a href="#contact-form" class="hidden sm:flex items-center gap-1.5 bg-navy-600 hover:bg-navy-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition">
-        <i class="ri-chat-3-line"></i> Get Help
-      </a>
     </div>
+
   </div>
 
+  <!-- Sub-nav categories -->
   <div class="border-t border-slate-100 bg-slate-50">
-    <div class="max-w-7xl mx-auto px-5 py-2 flex gap-5 text-xs font-semibold text-slate-500 overflow-x-auto">
-      <a href="index.html" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-printer-line"></i> All Printers</a>
-      <a href="#" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-drop-line"></i> Inkjet</a>
-      <a href="#" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-fire-line"></i> Laser</a>
-      <a href="#" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-file-copy-2-line"></i> All-in-One</a>
-      <a href="#" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-building-2-line"></i> Business</a>
-      <a href="#" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-ink-bottle-line"></i> Ink & Toner</a>
-      <a href="index.html#deals" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-flashlight-line"></i> Flash Deals</a>
-      <a href="contact.html" class="text-navy-600 whitespace-nowrap flex items-center gap-1"><i class="ri-headphone-line"></i> Tech Support</a>
+    <div class="max-w-7xl mx-auto px-6 py-2 flex gap-5 text-xs font-semibold text-slate-500 overflow-x-auto">
+      <a href="products.php" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-printer-line"></i> All Printers</a>
+      <a href="products.php?cat=inkjet" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-drop-line"></i> Inkjet</a>
+      <a href="products.php?cat=laser" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-fire-line"></i> Laser</a>
+      <a href="products.php?cat=allinone" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-file-copy-2-line"></i> All-in-One</a>
+      <a href="products.php?cat=business" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-building-2-line"></i> Business</a>
+      <a href="products.php?cat=ink" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-ink-bottle-line"></i> Ink & Toner</a>
+      <a href="products.php?cat=deals" class="hover:text-navy-600 whitespace-nowrap flex items-center gap-1 transition"><i class="ri-flashlight-line"></i> Flash Deals</a>
+      <a href="contact.php" class="text-navy-600 whitespace-nowrap flex items-center gap-1"><i class="ri-headphone-line"></i> Tech Support</a>
     </div>
   </div>
 </header>
@@ -123,7 +142,7 @@
     </p>
     <!-- Breadcrumb -->
     <div class="mt-6 flex items-center justify-center gap-2 text-xs text-blue-200">
-      <a href="index.html" class="hover:text-white transition">Home</a>
+      <a href="index.php" class="hover:text-white transition">Home</a>
       <i class="ri-arrow-right-s-line"></i>
       <span class="text-white font-semibold">Contact Us</span>
     </div>
@@ -139,9 +158,9 @@
         <i class="ri-phone-line text-white text-2xl"></i>
       </div>
       <h3 class="font-bold text-slate-800">Call Us</h3>
-      <p class="text-navy-600 font-bold mt-2 text-sm">1-800-GEEK-PRN</p>
+      <p class="text-navy-600 font-bold mt-2 text-sm">8019511533</p>
       <p class="text-xs text-slate-400 mt-1">Mon–Fri · 8am–8pm EST</p>
-      <a href="tel:18004335776" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-navy-600 hover:underline">
+      <a href="tel:8019511533" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-navy-600 hover:underline">
         <i class="ri-phone-fill"></i> Call Now
       </a>
     </div>
@@ -200,28 +219,28 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">First Name <span class="text-red-400">*</span></label>
-            <input type="text" required placeholder="John" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
+            <input type="text" name="first_name" required placeholder="John" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Last Name <span class="text-red-400">*</span></label>
-            <input type="text" required placeholder="Smith" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
+            <input type="text" name="last_name" required placeholder="Smith" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Email Address <span class="text-red-400">*</span></label>
-            <input type="email" required placeholder="john@example.com" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
+            <input type="email" name="email" required placeholder="john@example.com" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Phone Number</label>
-            <input type="tel" placeholder="+1 (555) 000-0000" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
+            <input type="tel" name="phone" placeholder="+1 (555) 000-0000" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1.5">Topic <span class="text-red-400">*</span></label>
-          <select required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-slate-50 transition">
+          <select name="topic" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 bg-slate-50 transition">
             <option value="" disabled selected>Select a topic…</option>
             <option>Printer Purchase Inquiry</option>
             <option>Order Status / Tracking</option>
@@ -237,12 +256,12 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1.5">Order Number <span class="text-slate-400 font-normal">(optional)</span></label>
-          <input type="text" placeholder="e.g. GSS-20250001" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
+          <input type="text" name="order_no" placeholder="e.g. GSS-20250001" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition"/>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1.5">Message <span class="text-red-400">*</span></label>
-          <textarea required rows="5" placeholder="Describe your issue or question in detail…" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition resize-none"></textarea>
+          <textarea name="message" required rows="5" placeholder="Describe your issue or question in detail…" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 transition resize-none"></textarea>
         </div>
 
         <div class="flex items-start gap-2.5">
@@ -250,7 +269,7 @@
           <label for="consent" class="text-xs text-slate-500 leading-relaxed">I agree to the <a href="#" class="text-navy-600 hover:underline">Privacy Policy</a> and consent to being contacted by GeekSupportSales regarding my inquiry.</label>
         </div>
 
-        <button type="submit" class="w-full bg-navy-600 hover:bg-navy-700 text-white font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+        <button type="submit" class="w-full btn-gradient text-white font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-sm">
           <i class="ri-send-plane-line"></i> Send Message
         </button>
       </form>
@@ -427,7 +446,7 @@
           <i class="ri-add-line text-navy-600 text-lg shrink-0 faq-icon transition-transform"></i>
         </button>
         <div class="faq-body hidden px-5 pb-4 text-sm text-slate-500 leading-relaxed">
-          Absolutely. We offer volume pricing for businesses ordering 5+ units. Contact our business sales team at business@geeksupportsales.com or call 1-800-GEEK-PRN for a custom quote.
+          Absolutely. We offer volume pricing for businesses ordering 5+ units. Contact our business sales team at business@geeksupportsales.com or call 8019511533 for a custom quote.
         </div>
       </div>
 
@@ -449,7 +468,7 @@
       Our experts can recommend the perfect printer for your budget and needs — home, office, or enterprise. No pressure, just honest advice.
     </p>
     <div class="mt-8 flex flex-wrap justify-center gap-4">
-      <a href="index.html#products" class="inline-flex items-center gap-2 bg-amber2-500 hover:bg-amber2-600 text-white font-bold px-8 py-3.5 rounded-xl transition shadow-lg text-sm">
+      <a href="index.php#products" class="inline-flex items-center gap-2 btn-gradient text-white font-bold px-8 py-3.5 rounded-xl transition shadow-lg text-sm">
         <i class="ri-printer-line"></i> Browse All Printers
       </a>
       <a href="#contact-form" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold px-8 py-3.5 rounded-xl transition text-sm">
@@ -484,19 +503,19 @@
     <div>
       <h4 class="text-white font-bold text-sm mb-4">Products</h4>
       <ul class="space-y-2.5 text-sm">
-        <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Inkjet Printers</a></li>
-        <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Laser Printers</a></li>
-        <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> All-in-One Printers</a></li>
-        <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Business Printers</a></li>
-        <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Ink Cartridges</a></li>
-        <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Toner Cartridges</a></li>
+        <li><a href="index.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Inkjet Printers</a></li>
+        <li><a href="index.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Laser Printers</a></li>
+        <li><a href="index.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> All-in-One Printers</a></li>
+        <li><a href="index.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Business Printers</a></li>
+        <li><a href="index.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Ink Cartridges</a></li>
+        <li><a href="index.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Toner Cartridges</a></li>
       </ul>
     </div>
 
     <div>
       <h4 class="text-white font-bold text-sm mb-4">Support</h4>
       <ul class="space-y-2.5 text-sm">
-        <li><a href="contact.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Printer Setup Help</a></li>
+        <li><a href="contact.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Printer Setup Help</a></li>
         <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Driver Downloads</a></li>
         <li><a href="#faq-list" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Troubleshooting FAQ</a></li>
         <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Warranty Claims</a></li>
@@ -513,7 +532,7 @@
         <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Careers</a></li>
         <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Privacy Policy</a></li>
         <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Terms of Service</a></li>
-        <li><a href="contact.html" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Contact Us</a></li>
+        <li><a href="contact.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Contact Us</a></li>
       </ul>
     </div>
 
@@ -532,30 +551,26 @@
 </footer>
 
 <!-- Back to top -->
-<button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fixed bottom-6 right-6 bg-navy-600 hover:bg-navy-700 text-white w-11 h-11 rounded-full shadow-lg transition z-30 flex items-center justify-center">
+<button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fixed bottom-6 right-6 btn-gradient text-white w-11 h-11 rounded-full shadow-lg transition z-30 flex items-center justify-center">
   <i class="ri-arrow-up-line text-lg"></i>
 </button>
 
-<script>
-  function handleSubmit(e) {
-    e.preventDefault();
-    document.getElementById('contact-form-el').classList.add('hidden');
-    document.getElementById('success-msg').classList.remove('hidden');
-  }
+<!-- WISHLIST DRAWER -->
+<div id="wl-drawer" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+  <div class="flex items-center justify-between p-5 border-b bg-red-500 text-white">
+    <h3 class="font-bold flex items-center gap-2"><i class="ri-heart-3-line text-lg"></i> My Wishlist</h3>
+    <button onclick="toggleWishlistDrawer()" class="hover:bg-red-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-close-line text-lg"></i></button>
+  </div>
+  <div id="wl-items" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+  <div class="p-4 border-t bg-slate-50">
+    <a href="products.php" class="block w-full text-center btn-gradient text-white font-bold py-3 rounded-xl transition text-sm">
+      <i class="ri-store-2-line mr-1"></i> Continue Shopping
+    </a>
+  </div>
+</div>
+<div id="wl-overlay" class="fixed inset-0 bg-black/40 z-40 hidden" onclick="toggleWishlistDrawer()"></div>
 
-  function toggleFaq(btn) {
-    const body = btn.nextElementSibling;
-    const icon = btn.querySelector('.faq-icon');
-    const isOpen = !body.classList.contains('hidden');
-    // Close all
-    document.querySelectorAll('.faq-body').forEach(b => b.classList.add('hidden'));
-    document.querySelectorAll('.faq-icon').forEach(i => { i.classList.remove('ri-subtract-line'); i.classList.add('ri-add-line'); i.style.transform=''; });
-    if (!isOpen) {
-      body.classList.remove('hidden');
-      icon.classList.remove('ri-add-line');
-      icon.classList.add('ri-subtract-line');
-    }
-  }
-</script>
+<script src="js/wishlist.js"></script>
+<script src="js/contact.js"></script>
 </body>
 </html>

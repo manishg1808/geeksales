@@ -1,3 +1,8 @@
+<?php
+// Backend logic has been moved to api/orders.php
+// This file now serves only the frontend HTML.
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,10 +15,10 @@
       theme: {
         extend: {
           colors: {
-            navy:{ 50:'#f0f4ff',100:'#dce6ff',600:'#1447c0',700:'#0f389e',800:'#0c2d7e',900:'#0a2260' },
-            amber2:{ 400:'#fbbf24',500:'#f59e0b',600:'#d97706' },
+            navy:  { 50:'#F8FAFC',100:'#F1F5F9',200:'#E5E7EB',300:'#CBD5E1',400:'#6B7280',500:'#2563EB',600:'#2563EB',700:'#1D4ED8',800:'#0F172A',900:'#0F172A' },
+            amber2:{ 50:'#FFF7ED',100:'#FFEDD5',200:'#FED7AA',300:'#FDBA74',400:'#FB923C',500:'#F97316',600:'#EA580C',700:'#C2410C',800:'#9A3412',900:'#7C2D12' },
           },
-          fontFamily:{ sans:['Inter','system-ui','sans-serif'] },
+          fontFamily:{ sans:['Raleway','system-ui','sans-serif'] },
         }
       }
     }
@@ -22,38 +27,41 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
   <style>
     html{scroll-behavior:smooth}
-    input:focus,select:focus,textarea:focus{outline:none;border-color:#1447c0;box-shadow:0 0 0 3px rgba(20,71,192,.1)}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#1e293b;box-shadow:0 0 0 3px rgba(30,41,59,.1)}
     .step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;transition:all .2s}
-    .step-dot.done{background:#1447c0;color:white}
-    .step-dot.active{background:#1447c0;color:white;box-shadow:0 0 0 4px rgba(20,71,192,.2)}
+    .step-dot.done{background:#1e293b;color:white}
+    .step-dot.active{background:#1e293b;color:white;box-shadow:0 0 0 4px rgba(37,99,235,.18)}
     .step-dot.idle{background:#e2e8f0;color:#94a3b8}
     .step-line{flex:1;height:2px;background:#e2e8f0;margin:0 4px;transition:background .3s}
-    .step-line.done{background:#1447c0}
+    .step-line.done{background:#1e293b}
     .form-field{width:100%;border:1px solid #e2e8f0;border-radius:.75rem;padding:.65rem 1rem;font-size:.875rem;background:#f8fafc;color:#1e293b;transition:all .15s}
-    .form-field:focus{background:#fff;border-color:#1447c0;box-shadow:0 0 0 3px rgba(20,71,192,.1)}
+    .form-field:focus{background:#fff;border-color:#1e293b;box-shadow:0 0 0 3px rgba(30,41,59,.1)}
     .pay-method{border:2px solid #e2e8f0;border-radius:1rem;padding:1rem;cursor:pointer;transition:all .15s}
-    .pay-method.selected{border-color:#1447c0;background:#f0f4ff}
+    .pay-method.selected{border-color:#1e293b;background:#f8fafc}
     .thin-scroll::-webkit-scrollbar{width:4px}
     .thin-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
     #success-overlay{transition:opacity .3s}
+    .brand-gradient{background:#2563EB}
+    .btn-gradient{background:#F97316;color:#fff}
+    .btn-gradient:hover{filter:brightness(1.05);box-shadow:0 10px 24px rgba(249,115,22,.24)}
   </style>
 </head>
 <body class="font-sans bg-slate-50 text-slate-800 antialiased">
 
 <!-- NAVBAR (minimal) -->
-<header class="bg-white border-b border-slate-200 shadow-sm">
+<header class="brand-gradient text-white shadow-sm">
   <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
-    <a href="index.html" class="flex items-center gap-2.5">
-      <div class="bg-navy-600 rounded-xl w-9 h-9 flex items-center justify-center"><i class="ri-printer-fill text-white"></i></div>
-      <div><span class="font-black text-navy-600">Geek</span><span class="font-black text-amber2-500">Support</span><span class="font-black text-slate-700">Sales</span></div>
+    <a href="index.php" class="flex items-center gap-2.5">
+      <div class="bg-white/15 border border-white/20 rounded-xl w-9 h-9 flex items-center justify-center"><i class="ri-printer-fill text-white"></i></div>
+      <div><span class="font-black text-white">Geek</span><span class="font-black text-blue-200">Support</span><span class="font-black text-white">Sales</span></div>
     </a>
-    <div class="flex items-center gap-2 text-xs text-slate-400">
+    <div class="flex items-center gap-2 text-xs text-white/80">
       <i class="ri-lock-2-fill text-emerald-500 text-base"></i>
-      <span class="font-semibold text-slate-500">Secure Checkout</span>
+      <span class="font-semibold text-white/90">Secure Checkout</span>
     </div>
-    <div class="flex items-center gap-2 text-xs text-slate-400">
-      <i class="ri-phone-line text-navy-600"></i>
-      <span>1-800-GEEK-PRN</span>
+    <div class="flex items-center gap-2 text-xs text-white/80">
+      <i class="ri-phone-line text-blue-200"></i>
+      <span>8019511533</span>
     </div>
   </div>
 </header>
@@ -119,7 +127,7 @@
         <input type="checkbox" id="create-account" class="accent-navy-600"/>
         <label for="create-account" class="text-xs text-slate-500">Create an account for faster checkout next time</label>
       </div>
-      <button onclick="goStep(2)" class="mt-5 bg-navy-600 hover:bg-navy-700 text-white font-bold px-8 py-3 rounded-xl transition text-sm flex items-center gap-2">
+      <button onclick="goStep(2)" class="mt-5 btn-gradient text-white font-bold px-8 py-3 rounded-xl transition text-sm flex items-center gap-2">
         Continue to Shipping <i class="ri-arrow-right-line"></i>
       </button>
     </div>
@@ -187,7 +195,7 @@
         <button onclick="goStep(1)" class="border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-xl transition text-sm hover:border-navy-500 hover:text-navy-600 flex items-center gap-2">
           <i class="ri-arrow-left-line"></i> Back
         </button>
-        <button onclick="goStep(3)" class="bg-navy-600 hover:bg-navy-700 text-white font-bold px-8 py-3 rounded-xl transition text-sm flex items-center gap-2">
+        <button onclick="goStep(3)" class="btn-gradient text-white font-bold px-8 py-3 rounded-xl transition text-sm flex items-center gap-2">
           Continue to Payment <i class="ri-arrow-right-line"></i>
         </button>
       </div>
@@ -270,7 +278,7 @@
         <button onclick="goStep(2)" class="border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-xl transition text-sm hover:border-navy-500 hover:text-navy-600 flex items-center gap-2">
           <i class="ri-arrow-left-line"></i> Back
         </button>
-        <button onclick="placeOrder()" class="flex-1 bg-amber2-500 hover:bg-amber2-600 text-white font-black py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg">
+        <button onclick="placeOrder()" class="flex-1 btn-gradient text-white font-black py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg">
           <i class="ri-lock-2-line"></i> Place Order Securely
         </button>
       </div>
@@ -342,177 +350,14 @@
       <div class="flex justify-between text-sm"><span class="text-slate-500">Total Charged</span><span class="font-black text-slate-800" id="order-total"></span></div>
     </div>
     <div class="flex gap-3 mt-6">
-      <a href="products.html" class="flex-1 border border-slate-200 text-slate-600 font-semibold py-3 rounded-xl hover:border-navy-500 hover:text-navy-600 transition text-sm text-center">Continue Shopping</a>
-      <a href="contact.html" class="flex-1 bg-navy-600 hover:bg-navy-700 text-white font-bold py-3 rounded-xl transition text-sm text-center flex items-center justify-center gap-2">
+      <a href="products.php" class="flex-1 border border-slate-200 text-slate-600 font-semibold py-3 rounded-xl hover:border-navy-500 hover:text-navy-600 transition text-sm text-center">Continue Shopping</a>
+      <a href="contact.php" class="flex-1 btn-gradient text-white font-bold py-3 rounded-xl transition text-sm text-center flex items-center justify-center gap-2">
         <i class="ri-headphone-line"></i> Schedule Setup
       </a>
     </div>
   </div>
 </div>
 
-<script>
-  let cart = JSON.parse(localStorage.getItem('gss_cart') || '[]');
-  let shippingCost = 0;
-  let discountAmt = 0;
-  let currentStep = 1;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    renderSummary();
-    // If cart empty, add a demo item
-    if (!cart.length) {
-      cart = [{ name:'HP DeskJet 4155e', price:89.99, qty:1 }];
-      renderSummary();
-    }
-  });
-
-  function renderSummary() {
-    const items = document.getElementById('summary-items');
-    const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
-    const tax = subtotal * 0.0825;
-    const total = subtotal + shippingCost + tax - discountAmt;
-    document.getElementById('summary-count').textContent = cart.reduce((s,i)=>s+i.qty,0) + ' item(s)';
-    document.getElementById('sum-subtotal').textContent = '$' + subtotal.toFixed(2);
-    document.getElementById('sum-shipping').textContent = shippingCost === 0 ? 'FREE' : '$' + shippingCost.toFixed(2);
-    document.getElementById('sum-shipping').className = shippingCost === 0 ? 'font-semibold text-emerald-600' : 'font-semibold text-slate-700';
-    document.getElementById('sum-tax').textContent = '$' + tax.toFixed(2);
-    document.getElementById('sum-total').textContent = '$' + total.toFixed(2);
-    items.innerHTML = cart.map(item => `
-      <div class="flex items-center gap-3">
-        <div class="bg-navy-50 rounded-xl w-12 h-12 flex items-center justify-center shrink-0">
-          <i class="ri-printer-fill text-navy-600 text-xl"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-slate-800 truncate">${item.name}</p>
-          <p class="text-xs text-slate-400">Qty: ${item.qty}</p>
-        </div>
-        <span class="font-bold text-slate-800 text-sm shrink-0">$${(item.price * item.qty).toFixed(2)}</span>
-      </div>`).join('');
-  }
-
-  function goStep(n) {
-    if (n === 2) {
-      const fname = document.getElementById('f-fname').value.trim();
-      const email = document.getElementById('f-email').value.trim();
-      if (!fname || !email) { showError('Please fill in your name and email.'); return; }
-    }
-    if (n === 3) {
-      const addr = document.getElementById('f-addr').value.trim();
-      if (!addr) { showError('Please enter your shipping address.'); return; }
-    }
-
-    currentStep = n;
-    [1,2,3].forEach(i => {
-      const step = document.getElementById('step'+i);
-      const dot = document.getElementById('step'+i+'-dot');
-      if (i < n) {
-        step.classList.add('opacity-50','pointer-events-none');
-        dot.className = 'step-dot done';
-        dot.innerHTML = '<i class="ri-check-line text-xs"></i>';
-        if (document.getElementById('line'+i)) document.getElementById('line'+i).classList.add('done');
-      } else if (i === n) {
-        step.classList.remove('opacity-50','pointer-events-none');
-        dot.className = 'step-dot active';
-        dot.textContent = i;
-        const numEl = document.getElementById('step'+i+'-num');
-        if (numEl) { numEl.className = 'bg-navy-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-black'; }
-      } else {
-        step.classList.add('opacity-50','pointer-events-none');
-        dot.className = 'step-dot idle';
-        dot.textContent = i;
-      }
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function selectShipping(type, el) {
-    document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
-    el.classList.add('selected');
-    shippingCost = type === 'express' ? 12.99 : type === 'overnight' ? 24.99 : 0;
-    renderSummary();
-  }
-
-  function selectPayTab(tab, btn) {
-    ['card','paypal','apple'].forEach(t => {
-      document.getElementById('pay-'+t).classList.add('hidden');
-      document.getElementById('pay-tab-'+t).className = 'flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-semibold text-sm hover:border-navy-400 transition';
-    });
-    document.getElementById('pay-'+tab).classList.remove('hidden');
-    btn.className = 'flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-navy-600 bg-navy-50 text-navy-700 font-bold text-sm transition';
-  }
-
-  function formatCard(el) {
-    let v = el.value.replace(/\D/g,'').substring(0,16);
-    el.value = v.replace(/(.{4})/g,'$1 ').trim();
-  }
-
-  function formatExpiry(el) {
-    let v = el.value.replace(/\D/g,'').substring(0,4);
-    if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
-    el.value = v;
-  }
-
-  function applyPromo() {
-    const code = document.getElementById('promo-input').value.trim().toUpperCase();
-    const msg = document.getElementById('promo-msg');
-    const row = document.getElementById('discount-row');
-    if (code === 'GEEK10') {
-      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
-      discountAmt = subtotal * 0.10;
-      document.getElementById('discount-amt').textContent = '-$' + discountAmt.toFixed(2);
-      row.classList.remove('hidden');
-      msg.textContent = '✓ 10% discount applied!';
-      msg.className = 'text-xs mt-1.5 text-emerald-600 font-semibold';
-      msg.classList.remove('hidden');
-      renderSummary();
-    } else if (code === 'SAVE20') {
-      discountAmt = 20;
-      document.getElementById('discount-amt').textContent = '-$20.00';
-      row.classList.remove('hidden');
-      msg.textContent = '✓ $20 discount applied!';
-      msg.className = 'text-xs mt-1.5 text-emerald-600 font-semibold';
-      msg.classList.remove('hidden');
-      renderSummary();
-    } else {
-      msg.textContent = '✗ Invalid promo code. Try GEEK10 or SAVE20';
-      msg.className = 'text-xs mt-1.5 text-red-500 font-semibold';
-      msg.classList.remove('hidden');
-    }
-  }
-
-  function placeOrder() {
-    const card = document.getElementById('f-card').value.trim();
-    const expiry = document.getElementById('f-expiry').value.trim();
-    const cvv = document.getElementById('f-cvv').value.trim();
-    const name = document.getElementById('f-cardname').value.trim();
-    if (!card || !expiry || !cvv || !name) { showError('Please complete all payment fields.'); return; }
-
-    // Show loading state
-    const btn = event.target;
-    btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Processing…';
-    btn.disabled = true;
-
-    setTimeout(() => {
-      const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
-      const tax = subtotal * 0.0825;
-      const total = subtotal + shippingCost + tax - discountAmt;
-      const orderNum = '#GSS-' + Math.floor(10000 + Math.random() * 90000);
-      const d = new Date(); d.setDate(d.getDate() + (shippingCost === 24.99 ? 1 : shippingCost === 12.99 ? 2 : 5));
-      document.getElementById('order-num').textContent = orderNum;
-      document.getElementById('order-delivery').textContent = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-      document.getElementById('order-total').textContent = '$' + total.toFixed(2);
-      localStorage.removeItem('gss_cart');
-      const overlay = document.getElementById('success-overlay');
-      overlay.classList.remove('opacity-0','pointer-events-none');
-    }, 1800);
-  }
-
-  function showError(msg) {
-    const t = document.createElement('div');
-    t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2';
-    t.innerHTML = `<i class="ri-error-warning-line text-base"></i>${msg}`;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
-</script>
+<script src="js/checkout.js"></script>
 </body>
 </html>
