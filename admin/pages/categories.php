@@ -36,14 +36,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $slug = trim($_POST['slug'] ?? '') ?: slugify($name);
         $description = trim($_POST['description'] ?? '') ?: category_description_for_name($name);
         $icon = trim($_POST['icon'] ?? '') ?: category_icon_for_name($name);
-        $data = [$name, $slug, $description, $icon, trim($_POST['color'] ?? 'navy'), (int)($_POST['active'] ?? 1)];
+        $imageUrl = $_POST['existing_image_url'] ?? '';
+        if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
+            $tmpName = $_FILES['image_file']['tmp_name'];
+            $origName = preg_replace('/[^a-zA-Z0-9._-]/', '', $_FILES['image_file']['name']);
+            $fileName = time() . '_' . $origName;
+            $uploadDir = __DIR__ . '/../../uploads/categories/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            if (move_uploaded_file($tmpName, $uploadDir . $fileName)) {
+                $imageUrl = 'uploads/categories/' . $fileName;
+            }
+        }
+        $data = [$name, $slug, $description, $icon, trim($imageUrl), trim($_POST['color'] ?? 'navy'), (int)($_POST['active'] ?? 1)];
         if ($name === '') {
             set_flash('Category name is required.', 'error');
         } elseif ($categoryId > 0) {
-            $pdo->prepare('UPDATE categories SET name=?, slug=?, description=?, icon=?, color=?, active=? WHERE id=?')->execute([...$data, $categoryId]);
+            $pdo->prepare('UPDATE categories SET name=?, slug=?, description=?, icon=?, image_url=?, color=?, active=? WHERE id=?')->execute([...$data, $categoryId]);
             set_flash('Category updated successfully.');
         } else {
-            $pdo->prepare('INSERT INTO categories (name, slug, description, icon, color, active) VALUES (?, ?, ?, ?, ?, ?)')->execute($data);
+            $pdo->prepare('INSERT INTO categories (name, slug, description, icon, image_url, color, active) VALUES (?, ?, ?, ?, ?, ?, ?)')->execute($data);
             set_flash('Category added successfully.');
         }
         redirect_admin('categories');
@@ -70,7 +83,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     }
 }
 
-$category = ['id'=>0,'name'=>'','slug'=>'','description'=>'','icon'=>'ri-printer-line','color'=>'navy','active'=>1];
+$category = ['id'=>0,'name'=>'','slug'=>'','description'=>'','icon'=>'ri-printer-line','image_url'=>'','color'=>'navy','active'=>1];
 if ($action === 'edit' && $id > 0) {
     $stmt = $pdo->prepare('SELECT * FROM categories WHERE id = ?');
     $stmt->execute([$id]);
@@ -130,13 +143,14 @@ $colorMap = [
             <p class="text-sm text-slate-400">Saved in geeksales.categories</p>
         </div>
     </div>
-    <form method="POST" class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+    <form method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
         <input type="hidden" name="form_action" value="save_category">
         <input type="hidden" name="id" value="<?php echo (int)$category['id']; ?>">
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Category Name</label><input name="name" id="category_name" required value="<?php echo e($category['name']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600" placeholder="e.g. Photo Printers"></div>
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Slug</label><input name="slug" id="category_slug" value="<?php echo e($category['slug']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600" placeholder="auto-generated"></div>
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Description</label><textarea name="description" id="category_description" rows="2" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none" placeholder="auto-generated from category name"><?php echo e($category['description']); ?></textarea></div>
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Icon</label><input name="icon" id="category_icon" value="<?php echo e($category['icon']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600" placeholder="auto-generated icon"></div>
+        <div><label class="block text-sm font-semibold text-slate-700 mb-2">Category Image</label><input type="file" name="image_file" accept="image/*" class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-navy-600 bg-white"><input type="hidden" name="existing_image_url" value="<?php echo e($category['image_url'] ?? ''); ?>"><?php if(!empty($category['image_url'])): ?><div class="mt-2 text-xs text-slate-500">Current: <a href="../<?php echo e($category['image_url']); ?>" target="_blank" class="text-indigo-600 hover:underline"><?php echo e($category['image_url']); ?></a></div><?php endif; ?></div>
         <div class="grid grid-cols-2 gap-4">
             <div><label class="block text-sm font-semibold text-slate-700 mb-2">Color</label><select name="color" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white"><?php foreach(array_keys($colorMap) as $color): ?><option value="<?php echo e($color); ?>" <?php echo $category['color']===$color?'selected':''; ?>><?php echo e($color); ?></option><?php endforeach; ?></select></div>
             <div><label class="block text-sm font-semibold text-slate-700 mb-2">Status</label><select name="active" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white"><option value="1" <?php echo (int)$category['active']===1?'selected':''; ?>>Active</option><option value="0" <?php echo (int)$category['active']===0?'selected':''; ?>>Inactive</option></select></div>
@@ -232,7 +246,7 @@ $colorMap = [
         <input type="checkbox" name="selected_ids[]" value="<?php echo (int)$cat['id']; ?>" class="item-checkbox absolute top-4 right-4 w-4 h-4 rounded text-indigo-600 border-slate-300 z-10">
         <div class="flex items-start justify-between mb-4">
             <div class="flex items-center gap-3">
-                <div class="<?php echo $c['bg']; ?> rounded-xl w-12 h-12 flex items-center justify-center"><i class="<?php echo e($cat['icon']); ?> <?php echo $c['text']; ?> text-xl"></i></div>
+                <div class="<?php echo $c['bg']; ?> rounded-xl w-12 h-12 flex items-center justify-center overflow-hidden"><?php if(!empty($cat['image_url'])): ?><img src="../<?php echo e($cat['image_url']); ?>" alt="<?php echo e($cat['name']); ?>" class="w-full h-full object-cover"><?php else: ?><i class="<?php echo e($cat['icon']); ?> <?php echo $c['text']; ?> text-xl"></i><?php endif; ?></div>
                 <div><h4 class="font-bold text-slate-800 text-sm"><?php echo e($cat['name']); ?></h4><span class="text-xs text-slate-400">/<?php echo e($cat['slug']); ?></span></div>
             </div>
             <span class="<?php echo $c['count']; ?> text-xs font-bold px-2 py-1 rounded-lg"><?php echo (int)$cat['product_count']; ?> products</span>
@@ -269,7 +283,7 @@ document.getElementById('selectAllGrid')?.addEventListener('change', function() 
                     <td class="px-5 py-3.5"><input type="checkbox" name="selected_ids[]" value="<?php echo (int)$cat['id']; ?>" class="item-checkbox w-4 h-4 rounded text-indigo-600 border-slate-300"></td>
                     <td class="px-5 py-3.5">
                         <div class="flex items-center gap-3">
-                            <div class="<?php echo $c['bg']; ?> rounded-xl w-10 h-10 flex items-center justify-center shrink-0"><i class="<?php echo e($cat['icon']); ?> <?php echo $c['text']; ?> text-lg"></i></div>
+                            <div class="<?php echo $c['bg']; ?> rounded-xl w-10 h-10 flex items-center justify-center shrink-0 overflow-hidden"><?php if(!empty($cat['image_url'])): ?><img src="../<?php echo e($cat['image_url']); ?>" alt="<?php echo e($cat['name']); ?>" class="w-full h-full object-cover"><?php else: ?><i class="<?php echo e($cat['icon']); ?> <?php echo $c['text']; ?> text-lg"></i><?php endif; ?></div>
                             <div><div class="font-bold text-slate-800"><?php echo e($cat['name']); ?></div><div class="text-[10px] text-slate-400">/<?php echo e($cat['slug']); ?></div></div>
                         </div>
                     </td>

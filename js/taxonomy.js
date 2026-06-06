@@ -7,6 +7,13 @@
     amber: ['bg-amber2-50', 'text-amber2-600', 'group-hover:bg-amber2-500'],
     red: ['bg-red-50', 'text-red-600', 'group-hover:bg-red-600'],
   };
+  const categoryCardThemes = {
+    navy: 'from-navy-500 to-navy-800',
+    slate: 'from-slate-500 to-slate-800',
+    emerald: 'from-emerald-500 to-emerald-800',
+    amber: 'from-amber2-500 to-amber2-800',
+    red: 'from-red-500 to-red-800',
+  };
 
   function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -16,6 +23,13 @@
 
   function categoryHref(category) {
     return `products.php?cat=${encodeURIComponent(category.frontend_key || category.slug)}`;
+  }
+
+  function assetUrl(path) {
+    const value = String(path || '').trim();
+    if (!value) return '';
+    if (/^(https?:)?\/\//i.test(value) || value.startsWith('data:')) return value;
+    return value.replace(/^\/+/, '');
   }
 
   function renderSubnav(categories) {
@@ -66,16 +80,19 @@
     if (!wrap) return;
 
     wrap.innerHTML = categories.map(category => {
-      const classes = colorClasses[category.color] || colorClasses.navy;
-      const description = category.description || `${category.name} products`;
+      const theme = categoryCardThemes[category.color] || categoryCardThemes.navy;
+      const image = assetUrl(category.image_url);
       return `
-        <a href="${categoryHref(category)}" class="card-lift bg-white border border-slate-200 rounded-2xl p-6 text-center group min-w-[210px] snap-start">
-          <div class="${classes[0]} rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-4 ${classes[2]} transition">
-            <i class="${esc(category.icon)} ${classes[1]} group-hover:text-white text-2xl transition"></i>
+        <a href="${categoryHref(category)}" class="card-lift relative overflow-hidden rounded-2xl border border-slate-200 text-white group shrink-0 w-[180px] sm:w-[190px] lg:w-[200px] h-40 bg-gradient-to-br ${theme}">
+          ${image ? `<img src="${esc(image)}" alt="${esc(category.name)}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition">` : ''}
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent"></div>
+          <div class="${image ? 'hidden' : 'absolute'} inset-0 flex items-center justify-center opacity-95 group-hover:scale-105 transition">
+            <i class="${esc(category.icon)} text-white/90 text-7xl"></i>
           </div>
-          <h3 class="font-bold text-slate-800 text-sm">${esc(category.name)}</h3>
-          <p class="text-xs text-slate-400 mt-1">${esc(description)}</p>
-          <span class="${classes[1]} text-xs font-semibold mt-3 inline-block">${Number(category.product_count) || 0} products <i class="ri-arrow-right-line"></i></span>
+          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 text-left">
+            <h3 class="font-bold text-white text-sm">${esc(category.name)}</h3>
+            <span class="text-white/80 text-xs font-semibold mt-1 inline-block">${Number(category.product_count) || 0} products <i class="ri-arrow-right-line"></i></span>
+          </div>
         </a>`;
     }).join('');
   }

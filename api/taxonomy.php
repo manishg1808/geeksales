@@ -9,7 +9,7 @@ api_require_method('GET');
 $pdo = api_db();
 
 $categories = $pdo->query(
-    "SELECT c.id, c.name, c.slug, c.description, c.icon, c.color, COUNT(p.id) AS product_count
+    "SELECT c.id, c.name, c.slug, c.description, c.icon, c.image_url, c.color, COUNT(p.id) AS product_count
      FROM categories c
      LEFT JOIN products p ON p.category_id = c.id AND p.status = 'active'
      WHERE c.active = 1
@@ -38,6 +38,7 @@ api_success([
         },
         'description' => (string)($row['description'] ?? ''),
         'icon' => (string)($row['icon'] ?: 'ri-printer-line'),
+        'image_url' => (string)($row['image_url'] ?? ''),
         'color' => (string)($row['color'] ?: 'navy'),
         'product_count' => (int)$row['product_count'],
     ], $categories),

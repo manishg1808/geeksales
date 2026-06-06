@@ -101,7 +101,35 @@ function schema_marker_path(): string
 
 function schema_is_ready(PDO $pdo): bool
 {
-    return is_file(schema_marker_path());
+    if (!is_file(schema_marker_path())) {
+        return false;
+    }
+
+    $requiredColumns = [
+        'categories' => ['image_url'],
+        'banners' => ['secondary_button_text', 'secondary_link_url', 'image_url', 'poster_style'],
+    ];
+    try {
+        foreach ($requiredColumns as $table => $columns) {
+            $existing = [];
+            $stmt = $pdo->query("SHOW COLUMNS FROM `$table`");
+            if (!$stmt) {
+                return false;
+            }
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $col) {
+                $existing[] = strtolower($col['Field']);
+            }
+            foreach ($columns as $column) {
+                if (!in_array(strtolower($column), $existing, true)) {
+                    return false;
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        return false;
+    }
+
+    return true;
 }
 
 function mark_schema_ready(): void
@@ -248,6 +276,7 @@ function ensure_schema(PDO $pdo): void
             slug VARCHAR(160) NOT NULL UNIQUE,
             description TEXT,
             icon VARCHAR(80) DEFAULT 'ri-printer-line',
+            image_url VARCHAR(255) DEFAULT '',
             color VARCHAR(30) DEFAULT 'navy',
             active TINYINT(1) NOT NULL DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -310,6 +339,10 @@ function ensure_schema(PDO $pdo): void
             badge VARCHAR(60) DEFAULT '',
             button_text VARCHAR(80) DEFAULT 'Shop Now',
             link_url VARCHAR(255) DEFAULT '',
+            secondary_button_text VARCHAR(80) DEFAULT '',
+            secondary_link_url VARCHAR(255) DEFAULT '',
+            image_url VARCHAR(255) DEFAULT '',
+            poster_style VARCHAR(40) DEFAULT 'standard',
             location VARCHAR(120) NOT NULL,
             bg_theme VARCHAR(40) DEFAULT 'navy',
             status ENUM('active','inactive','scheduled') NOT NULL DEFAULT 'active',
@@ -458,6 +491,38 @@ function ensure_schema(PDO $pdo): void
         // Suppress or log migration error
     }
 
+    try {
+        $tableColumns = [
+            'categories' => [
+                'image_url' => "VARCHAR(255) DEFAULT '' AFTER icon",
+            ],
+            'banners' => [
+                'secondary_button_text' => "VARCHAR(80) DEFAULT '' AFTER link_url",
+                'secondary_link_url' => "VARCHAR(255) DEFAULT '' AFTER secondary_button_text",
+                'image_url' => "VARCHAR(255) DEFAULT '' AFTER secondary_link_url",
+                'poster_style' => "VARCHAR(40) DEFAULT 'standard' AFTER image_url",
+            ],
+        ];
+
+        foreach ($tableColumns as $table => $columns) {
+            $existingCols = [];
+            $stmtCols = $pdo->query("SHOW COLUMNS FROM `$table`");
+            if (!$stmtCols) {
+                continue;
+            }
+            foreach ($stmtCols->fetchAll(PDO::FETCH_ASSOC) as $col) {
+                $existingCols[] = strtolower($col['Field']);
+            }
+            foreach ($columns as $colName => $definition) {
+                if (!in_array(strtolower($colName), $existingCols, true)) {
+                    $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$colName` $definition");
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // Suppress or log migration error
+    }
+
     seed_database($pdo);
     mark_schema_ready();
 }
@@ -497,6 +562,19 @@ function seed_database(PDO $pdo): void
         foreach ($categories as $category) {
             $stmt->execute($category);
         }
+    }
+
+    $categoryImages = [
+        'inkjet' => 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=500&q=80',
+        'laser' => 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=500&q=80',
+        'all-in-one' => 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=500&q=80',
+        'business' => 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=500&q=80',
+        'ink-toner' => 'https://images.unsplash.com/photo-1606229365485-93a3b8ee0385?auto=format&fit=crop&w=500&q=80',
+        'deals' => 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=500&q=80',
+    ];
+    $imageStmt = $pdo->prepare("UPDATE categories SET image_url = ? WHERE slug = ? AND (image_url IS NULL OR image_url = '')");
+    foreach ($categoryImages as $slug => $imageUrl) {
+        $imageStmt->execute([$imageUrl, $slug]);
     }
 
     if (table_count($pdo, 'products') === 0) {
@@ -558,6 +636,20 @@ function seed_database(PDO $pdo): void
         $stmt = $pdo->prepare('INSERT INTO banners (title, subtitle, badge, button_text, link_url, location, bg_theme, status, start_date, end_date, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         foreach ($banners as $banner) {
             $stmt->execute($banner);
+        }
+    }
+
+    $posterBanners = [
+        ['Smart Printing Better Every Day', 'Reliable printers for home, office and business - built for performance.', '', 'Shop Printers', 'products.php', 'View Deals', 'products.php?cat=deals', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=900&q=80', 'poster_light', 'Homepage Hero', 'navy', 'active', 4],
+        ['Professional Results. Every Page.', 'High-performance printers for business, home and everything in between.', '', 'Shop Printers', 'products.php?cat=business', 'View Deals', 'products.php?cat=deals', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=900&q=80', 'poster_dark', 'Homepage Hero', 'navy', 'active', 5],
+        ['Print Smarter. Save More.', 'Smart solutions for efficient printing at home or work.', '', 'Shop Printers', 'products.php', 'View Deals', 'products.php?cat=deals', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=900&q=80', 'poster_teal', 'Homepage Hero', 'emerald', 'inactive', 6],
+    ];
+    $existsStmt = $pdo->prepare('SELECT COUNT(*) FROM banners WHERE title = ? AND location = ?');
+    $insertPoster = $pdo->prepare('INSERT INTO banners (title, subtitle, badge, button_text, link_url, secondary_button_text, secondary_link_url, image_url, poster_style, location, bg_theme, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    foreach ($posterBanners as $banner) {
+        $existsStmt->execute([$banner[0], $banner[9]]);
+        if ((int)$existsStmt->fetchColumn() === 0) {
+            $insertPoster->execute($banner);
         }
     }
 

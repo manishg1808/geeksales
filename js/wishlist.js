@@ -173,25 +173,27 @@ function wlRenderDrawer() {
 
   const items = [...s].map(id => WL_PRODUCTS.find(p => p.id === id)).filter(Boolean);
   container.innerHTML = items.map(p => `
-    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl p-3">
-      <a href="product-detail.php?id=${p.id}" class="rounded-xl flex items-center justify-center w-14 h-14 shrink-0" style="background:${p.color}">
-        <i class="ri-${p.cat==='ink'?'ink-bottle':'printer'}-fill text-2xl" style="color:${p.iconColor}"></i>
+    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3">
+      <div class="flex items-center gap-3">
+      <a href="product-detail.php?id=${p.id}" class="rounded-2xl flex items-center justify-center w-16 h-16 shrink-0" style="background:${p.color}">
+        <i class="ri-${p.cat==='ink'?'ink-bottle':'printer'}-fill text-3xl" style="color:${p.iconColor}"></i>
       </a>
       <div class="flex-1 min-w-0">
-        <a href="product-detail.php?id=${p.id}" class="text-xs font-bold text-slate-800 hover:text-navy-600 leading-snug block truncate">${p.name}</a>
+        <a href="product-detail.php?id=${p.id}" class="text-sm font-black text-slate-800 hover:text-navy-600 leading-snug block">${p.name}</a>
         <p class="text-xs text-slate-400 mt-0.5">${p.brand}</p>
-        <p class="text-sm font-black text-navy-700 mt-0.5">$${p.price.toFixed(2)}
-          ${p.oldPrice ? `<span class="text-[10px] text-slate-400 font-normal line-through ml-1">$${p.oldPrice.toFixed(2)}</span>` : ''}
+        <p class="text-lg font-black text-navy-700 mt-1">$${p.price.toFixed(2)}
+          ${p.oldPrice ? `<span class="text-xs text-slate-400 font-normal line-through ml-1">$${p.oldPrice.toFixed(2)}</span>` : ''}
         </p>
       </div>
-      <div class="flex flex-col gap-1.5 shrink-0">
+      </div>
+      <div class="mt-3 grid grid-cols-[1fr_44px] gap-2">
         <button onclick="wlAddToCartFromDrawer(${p.id})" title="Add to cart"
-          class="w-8 h-8 bg-navy-600 hover:bg-navy-700 text-white rounded-xl flex items-center justify-center transition">
-          <i class="ri-shopping-cart-2-line text-sm"></i>
+          class="h-11 bg-navy-600 hover:bg-navy-700 text-white rounded-xl flex items-center justify-center gap-2 transition text-sm font-bold">
+          <i class="ri-shopping-cart-2-line text-lg"></i> Add
         </button>
         <button onclick="wlRemove(${p.id})" title="Remove"
-          class="w-8 h-8 border border-red-200 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl flex items-center justify-center transition">
-          <i class="ri-heart-break-line text-sm"></i>
+          class="h-11 border border-red-200 bg-white hover:bg-red-50 text-red-500 rounded-xl flex items-center justify-center transition" aria-label="Remove ${p.name} from wishlist">
+          <i class="ri-delete-bin-line text-lg"></i>
         </button>
       </div>
     </div>`).join('');

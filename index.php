@@ -1,3 +1,33 @@
+<?php
+require_once __DIR__ . '/admin/includes/db.php';
+
+$heroPosterBanners = [];
+try {
+    $homePdo = db();
+    $stmt = $homePdo->query(
+        "SELECT *
+         FROM banners
+         WHERE location = 'Homepage Hero'
+           AND status = 'active'
+           AND poster_style <> 'standard'
+           AND (start_date IS NULL OR start_date <= CURDATE())
+           AND (end_date IS NULL OR end_date >= CURDATE())
+         ORDER BY sort_order, id"
+    );
+    $heroPosterBanners = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+} catch (Throwable $e) {
+    $heroPosterBanners = [];
+}
+
+function home_asset_url(string $path): string
+{
+    $path = trim($path);
+    if ($path === '' || preg_match('/^(https?:)?\/\//i', $path) || str_starts_with($path, 'data:')) {
+        return $path;
+    }
+    return ltrim($path, '/');
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,6 +65,8 @@
     .btn-gradient:hover{filter:brightness(1.05);box-shadow:0 10px 24px rgba(249,115,22,.24)}
     .hero-slide{transition:opacity .7s ease}
     .section-label{letter-spacing:.12em;font-size:.7rem;font-weight:700;text-transform:uppercase;color:#1e293b}
+    .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none}
+    .no-scrollbar::-webkit-scrollbar{display:none}
     input:focus,textarea:focus{outline:none;border-color:#1e293b;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
   </style>
 </head>
@@ -316,6 +348,45 @@
   </div>
 
   <!-- ── Prev / Next Arrows ── -->
+  <?php foreach ($heroPosterBanners as $posterIndex => $banner):
+    $slideIndex = 3 + $posterIndex;
+    $style = (string)($banner['poster_style'] ?? 'poster_light');
+    $isDark = $style === 'poster_dark';
+    $isTeal = $style === 'poster_teal';
+    $wrapClass = $isDark
+      ? 'bg-[#071426] text-white'
+      : ($isTeal ? 'bg-gradient-to-br from-emerald-50 via-white to-cyan-50 text-slate-900' : 'bg-gradient-to-br from-blue-50 via-white to-slate-100 text-slate-900');
+    $primaryClass = $isDark ? 'bg-amber2-500 hover:bg-amber2-600 text-white' : ($isTeal ? 'bg-teal-700 hover:bg-teal-800 text-white' : 'bg-navy-600 hover:bg-navy-700 text-white');
+    $secondaryClass = $isDark ? 'border-white/50 text-white hover:bg-white/10' : ($isTeal ? 'border-teal-600 text-teal-800 hover:bg-teal-50' : 'border-amber2-500 text-amber2-700 hover:bg-amber2-50');
+    $imageUrl = home_asset_url((string)($banner['image_url'] ?? ''));
+  ?>
+  <div class="hero-slide absolute inset-0 transition-opacity duration-700 opacity-0 pointer-events-none" data-index="<?php echo $slideIndex; ?>">
+    <div class="absolute inset-0 <?php echo $wrapClass; ?>"></div>
+    <div class="relative z-10 h-full max-w-7xl mx-auto px-8 flex items-center">
+      <div class="grid grid-cols-1 md:grid-cols-[0.9fr_1.1fr] gap-8 items-center w-full">
+        <div class="<?php echo $isDark ? 'text-white' : 'text-slate-900'; ?>">
+          <p class="text-[11px] font-black uppercase tracking-widest <?php echo $isDark ? 'text-white/70' : 'text-slate-500'; ?> mb-4"><?php echo $isDark ? 'Professional Printing' : ($isTeal ? 'Smart Solutions' : 'Printer Deals'); ?></p>
+          <h2 class="text-4xl lg:text-5xl font-black leading-[1.06] tracking-tight max-w-lg"><?php echo e($banner['title']); ?></h2>
+          <p class="mt-4 <?php echo $isDark ? 'text-blue-100' : 'text-slate-600'; ?> text-base leading-relaxed max-w-md"><?php echo e($banner['subtitle']); ?></p>
+          <div class="mt-7 flex flex-wrap gap-3">
+            <?php if(!empty($banner['button_text'])): ?><a href="<?php echo e($banner['link_url'] ?: 'products.php'); ?>" class="inline-flex items-center gap-2 <?php echo $primaryClass; ?> font-bold px-6 py-3 rounded-lg transition shadow-sm text-sm"><?php echo e($banner['button_text']); ?></a><?php endif; ?>
+            <?php if(!empty($banner['secondary_button_text'])): ?><a href="<?php echo e($banner['secondary_link_url'] ?: 'products.php?cat=deals'); ?>" class="inline-flex items-center gap-2 bg-transparent border <?php echo $secondaryClass; ?> font-bold px-6 py-3 rounded-lg transition text-sm"><?php echo e($banner['secondary_button_text']); ?></a><?php endif; ?>
+          </div>
+        </div>
+        <div class="relative hidden md:flex h-[360px] items-center justify-center">
+          <div class="absolute inset-x-8 bottom-10 h-24 rounded-full <?php echo $isDark ? 'bg-blue-400/10' : 'bg-slate-300/40'; ?> blur-xl"></div>
+          <div class="absolute right-6 top-10 bottom-10 w-72 rounded-full <?php echo $isDark ? 'bg-white/5' : 'bg-white/55'; ?>"></div>
+          <?php if($imageUrl !== ''): ?>
+            <img src="<?php echo e($imageUrl); ?>" alt="<?php echo e($banner['title']); ?>" class="relative z-10 max-h-[320px] w-full object-contain drop-shadow-2xl">
+          <?php else: ?>
+            <i class="ri-printer-fill relative z-10 text-[220px] <?php echo $isDark ? 'text-amber2-400' : 'text-navy-700'; ?>"></i>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+  <?php endforeach; ?>
+
   <button onclick="sliderMove(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/15 hover:bg-white/30 backdrop-blur-sm border border-white/25 text-white rounded-full flex items-center justify-center transition">
     <i class="ri-arrow-left-s-line text-xl"></i>
   </button>
@@ -328,10 +399,13 @@
     <button onclick="sliderGoto(0)" class="slider-dot w-7 h-2 rounded-full bg-white transition-all" data-dot="0"></button>
     <button onclick="sliderGoto(1)" class="slider-dot w-2 h-2 rounded-full bg-white/40 transition-all" data-dot="1"></button>
     <button onclick="sliderGoto(2)" class="slider-dot w-2 h-2 rounded-full bg-white/40 transition-all" data-dot="2"></button>
+    <?php foreach ($heroPosterBanners as $posterIndex => $_banner): $dotIndex = 3 + $posterIndex; ?>
+    <button onclick="sliderGoto(<?php echo $dotIndex; ?>)" class="slider-dot w-2 h-2 rounded-full bg-white/40 transition-all" data-dot="<?php echo $dotIndex; ?>"></button>
+    <?php endforeach; ?>
   </div>
 
   <!-- ── Slide counter ── -->
-  <div class="absolute bottom-5 right-6 z-20 text-white/60 text-xs font-semibold" id="slide-counter">1 / 3</div>
+  <div class="absolute bottom-5 right-6 z-20 text-white/60 text-xs font-semibold" id="slide-counter">1 / <?php echo 3 + count($heroPosterBanners); ?></div>
 
   <!-- ── Video mute toggle (only shown on slide 0) ── -->
   <button id="vid-toggle" onclick="toggleVidSound()" title="Toggle sound"
@@ -344,7 +418,7 @@
 <script>
   // ===== HERO SLIDER =====
   let sliderCurrent = 0;
-  const sliderTotal = 3;
+  const sliderTotal = <?php echo 3 + count($heroPosterBanners); ?>;
   let sliderTimer;
 
   function sliderGoto(n) {
@@ -388,21 +462,57 @@
   sliderReset();
 </script>
 
+<!-- ======= TRUST STRIP ======= -->
+<section class="bg-white border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-5">
+    <div class="grid grid-cols-2 lg:grid-cols-4 divide-x-0 lg:divide-x divide-slate-200">
+      <div class="flex items-center justify-center gap-3 py-4 px-3">
+        <i class="ri-truck-line text-navy-600 text-2xl shrink-0"></i>
+        <div class="leading-tight">
+          <p class="text-xs font-black text-slate-800">Free Shipping</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">On orders over $99</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-3 py-4 px-3">
+        <i class="ri-refresh-line text-navy-600 text-2xl shrink-0"></i>
+        <div class="leading-tight">
+          <p class="text-xs font-black text-slate-800">30-Day Returns</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Hassle-free returns</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-3 py-4 px-3">
+        <i class="ri-shield-check-line text-navy-600 text-2xl shrink-0"></i>
+        <div class="leading-tight">
+          <p class="text-xs font-black text-slate-800">Secure Payments</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">100% protected</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-3 py-4 px-3">
+        <i class="ri-customer-service-2-line text-navy-600 text-2xl shrink-0"></i>
+        <div class="leading-tight">
+          <p class="text-xs font-black text-slate-800">Expert Support</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Here to help</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ======= PRINTER SHOWCASE ======= -->
 <section class="py-14 px-5 bg-white border-b border-slate-100">
   <div class="max-w-7xl mx-auto">
     <div class="flex items-end justify-between mb-8">
       <div>
-        <p class="section-label mb-1">Featured Printer Deals</p>
-        <h2 class="text-2xl md:text-3xl font-black text-slate-800">Choose Your Printer</h2>
-        <p class="text-slate-500 text-sm mt-1">Quick-buy options with setup support included.</p>
+        <p class="section-label mb-1">Best Seller HP Authorized</p>
+        <h2 class="text-2xl md:text-3xl font-black text-slate-800">Choose Your HP Printer</h2>
+        <p class="text-slate-500 text-sm mt-1">Authorized HP printer deals with setup support included.</p>
       </div>
       <a href="products.php" class="text-navy-600 text-sm font-semibold hover:underline flex items-center gap-1">View All <i class="ri-arrow-right-line"></i></a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <!-- Grid 1: One printer -->
-      <div class="card-lift bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden" data-home-product-id="1">
+      <div class="card-lift bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden" data-featured-hp-printer>
         <div class="grid grid-cols-1 md:grid-cols-2 h-full">
           <div class="bg-navy-50 min-h-[280px] flex items-center justify-center p-8">
             <i class="ri-printer-fill text-navy-500" style="font-size:150px;line-height:1"></i>
@@ -428,48 +538,48 @@
         </div>
       </div>
 
-      <!-- Grid 2: Two printers -->
+      <!-- Grid 2: Two HP printers -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div class="card-lift bg-white border border-slate-200 rounded-3xl overflow-hidden" data-home-product-id="2">
-          <div class="bg-slate-100 h-40 flex items-center justify-center p-5">
-            <i class="ri-printer-fill text-slate-500" style="font-size:86px;line-height:1"></i>
+        <div class="card-lift bg-white border border-slate-200 rounded-3xl overflow-hidden" data-featured-hp-printer>
+          <div class="bg-navy-50 h-40 flex items-center justify-center p-5">
+            <i class="ri-printer-fill text-navy-500" style="font-size:86px;line-height:1"></i>
           </div>
           <div class="p-5">
-            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Canon</p>
-            <h3 class="font-black text-slate-800 mt-1">Canon PIXMA TR8620</h3>
-            <p class="text-xs text-slate-400 mt-1">Home Office All-in-One</p>
+            <p class="text-[10px] text-navy-600 font-bold uppercase tracking-widest">HP</p>
+            <h3 class="font-black text-slate-800 mt-1">HP LaserJet Pro M404n</h3>
+            <p class="text-xs text-slate-400 mt-1">Authorized HP Laser Printer</p>
             <div class="flex items-baseline gap-2 mt-3">
-              <span class="text-xl font-black text-slate-800">$149.99</span>
-              <span class="text-xs text-slate-400 line-through">$179.99</span>
+              <span class="text-xl font-black text-slate-800">$249.00</span>
+              <span class="text-xs text-slate-400 line-through">$299.00</span>
             </div>
             <div class="mt-4 grid grid-cols-[52px_1fr] gap-2 items-stretch">
-              <button onclick="addToCart('Canon PIXMA TR8620',149.99)" class="h-11 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add Canon PIXMA TR8620 to cart">
+              <button onclick="addToCart('HP LaserJet Pro M404n',249)" class="h-11 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add HP LaserJet Pro M404n to cart">
                 <i class="ri-shopping-cart-2-line text-[28px] leading-none"></i>
               </button>
-              <button onclick="buyNow('Canon PIXMA TR8620',149.99)" class="btn-gradient h-11 w-full rounded-xl transition font-bold text-xs flex items-center justify-center gap-1.5">
+              <button onclick="buyNow('HP LaserJet Pro M404n',249)" class="btn-gradient h-11 w-full rounded-xl transition font-bold text-xs flex items-center justify-center gap-1.5">
                 Buy Now
               </button>
             </div>
           </div>
         </div>
 
-        <div class="card-lift bg-white border border-slate-200 rounded-3xl overflow-hidden" data-home-product-id="4">
-          <div class="bg-emerald-50 h-40 flex items-center justify-center p-5">
-            <i class="ri-printer-fill text-emerald-500" style="font-size:86px;line-height:1"></i>
+        <div class="card-lift bg-white border border-slate-200 rounded-3xl overflow-hidden" data-featured-hp-printer>
+          <div class="bg-blue-50 h-40 flex items-center justify-center p-5">
+            <i class="ri-printer-fill text-blue-600" style="font-size:86px;line-height:1"></i>
           </div>
           <div class="p-5">
-            <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Epson</p>
-            <h3 class="font-black text-slate-800 mt-1">Epson EcoTank ET-2800</h3>
-            <p class="text-xs text-slate-400 mt-1">Supertank Inkjet Printer</p>
+            <p class="text-[10px] text-navy-600 font-bold uppercase tracking-widest">HP</p>
+            <h3 class="font-black text-slate-800 mt-1">HP OfficeJet Pro 9015e</h3>
+            <p class="text-xs text-slate-400 mt-1">Authorized HP All-in-One</p>
             <div class="flex items-baseline gap-2 mt-3">
-              <span class="text-xl font-black text-slate-800">$174.99</span>
+              <span class="text-xl font-black text-slate-800">$199.99</span>
               <span class="text-xs text-slate-400 line-through">$249.99</span>
             </div>
             <div class="mt-4 grid grid-cols-[52px_1fr] gap-2 items-stretch">
-              <button onclick="addToCart('Epson EcoTank ET-2800',174.99)" class="h-11 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add Epson EcoTank ET-2800 to cart">
+              <button onclick="addToCart('HP OfficeJet Pro 9015e',199.99)" class="h-11 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add HP OfficeJet Pro 9015e to cart">
                 <i class="ri-shopping-cart-2-line text-[28px] leading-none"></i>
               </button>
-              <button onclick="buyNow('Epson EcoTank ET-2800',174.99)" class="btn-gradient h-11 w-full rounded-xl transition font-bold text-xs flex items-center justify-center gap-1.5">
+              <button onclick="buyNow('HP OfficeJet Pro 9015e',199.99)" class="btn-gradient h-11 w-full rounded-xl transition font-bold text-xs flex items-center justify-center gap-1.5">
                 Buy Now
               </button>
             </div>
@@ -487,20 +597,20 @@
     <h2 class="text-2xl md:text-3xl font-black text-center text-slate-800 mb-2">Shop by Category</h2>
     <p class="text-center text-slate-500 text-sm mb-10">Find the right printer for every need</p>
     <div class="relative">
-      <button type="button" onclick="document.querySelector('[data-home-category-slider]')?.scrollBy({left:-260,behavior:'smooth'})" class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-navy-600 items-center justify-center">
+      <button type="button" onclick="document.querySelector('[data-home-category-slider]')?.scrollBy({left:-260,behavior:'smooth'})" class="flex absolute -left-3 md:-left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-navy-600 items-center justify-center">
         <i class="ri-arrow-left-s-line text-xl"></i>
       </button>
-      <div data-home-category-slider class="flex gap-5 overflow-x-auto snap-x pb-2 thin-scroll">
-        <a href="products.php?cat=inkjet" class="card-lift bg-white border border-slate-200 rounded-2xl p-6 text-center group min-w-[210px] snap-start">
-          <div class="bg-navy-50 rounded-2xl w-14 h-14 flex items-center justify-center mx-auto mb-4 group-hover:bg-navy-600 transition">
-            <i class="ri-drop-line text-navy-600 group-hover:text-white text-2xl transition"></i>
+      <div data-home-category-slider class="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar px-1">
+        <a href="products.php?cat=inkjet" class="card-lift relative overflow-hidden rounded-2xl border border-slate-200 text-white group shrink-0 w-[180px] sm:w-[190px] lg:w-[200px] h-40 bg-gradient-to-br from-navy-500 to-navy-800">
+          <img src="https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=500&q=80" alt="Inkjet Printers" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 text-left">
+            <h3 class="font-bold text-white text-sm">Inkjet Printers</h3>
+            <span class="text-white/80 text-xs font-semibold mt-1 inline-block">View products <i class="ri-arrow-right-line"></i></span>
           </div>
-          <h3 class="font-bold text-slate-800 text-sm">Inkjet Printers</h3>
-          <p class="text-xs text-slate-400 mt-1">Vivid color output</p>
-          <span class="text-navy-600 text-xs font-semibold mt-3 inline-block">Shop now <i class="ri-arrow-right-line"></i></span>
         </a>
       </div>
-      <button type="button" onclick="document.querySelector('[data-home-category-slider]')?.scrollBy({left:260,behavior:'smooth'})" class="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-navy-600 items-center justify-center">
+      <button type="button" onclick="document.querySelector('[data-home-category-slider]')?.scrollBy({left:260,behavior:'smooth'})" class="flex absolute -right-3 md:-right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-navy-600 items-center justify-center">
         <i class="ri-arrow-right-s-line text-xl"></i>
       </button>
     </div>
@@ -702,7 +812,7 @@
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center" data-home-product-id="13">
+      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center">
         <div class="bg-navy-50 rounded-xl p-4 mb-3 flex justify-center">
           <i class="ri-ink-bottle-line text-navy-600 text-4xl"></i>
         </div>
@@ -713,7 +823,7 @@
         <button onclick="addToCart('HP 65XL Black Ink',24.99)" class="w-full mt-3 btn-gradient text-white text-xs font-semibold py-2 rounded-lg transition">Add to Cart</button>
       </div>
 
-      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center" data-home-product-id="14">
+      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center">
         <div class="bg-red-50 rounded-xl p-4 mb-3 flex justify-center">
           <i class="ri-ink-bottle-line text-red-500 text-4xl"></i>
         </div>
@@ -724,7 +834,7 @@
         <button onclick="addToCart('Canon PG-245XL',19.99)" class="w-full mt-3 btn-gradient text-white text-xs font-semibold py-2 rounded-lg transition">Add to Cart</button>
       </div>
 
-      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center" data-home-product-id="15">
+      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center">
         <div class="bg-slate-100 rounded-xl p-4 mb-3 flex justify-center">
           <i class="ri-archive-2-line text-slate-600 text-4xl"></i>
         </div>
@@ -735,7 +845,7 @@
         <button onclick="addToCart('Brother TN760 Toner',49.99)" class="w-full mt-3 btn-gradient text-white text-xs font-semibold py-2 rounded-lg transition">Add to Cart</button>
       </div>
 
-      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center" data-home-product-id="16">
+      <div class="card-lift bg-white border border-slate-200 rounded-2xl p-5 text-center">
         <div class="bg-emerald-50 rounded-xl p-4 mb-3 flex justify-center">
           <i class="ri-ink-bottle-line text-emerald-600 text-4xl"></i>
         </div>
@@ -769,6 +879,47 @@
       </div>
       <div class="bg-navy-600 min-h-[220px] flex items-center justify-center p-8">
         <i class="ri-printer-fill text-white/90" style="font-size:150px;line-height:1"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= BRAND SHOWCASE STRIP ======= -->
+<section class="py-8 bg-[#071426] text-white">
+  <div class="max-w-7xl mx-auto px-5">
+    <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 p-7 md:p-9">
+      <div class="flex flex-col justify-center">
+        <p class="text-xs font-black text-white/70 mb-3">Top Brands &bull; Best Prices</p>
+        <h2 class="text-3xl md:text-4xl font-black leading-tight">World's Best Printer Brands</h2>
+        <p class="text-blue-100 text-sm leading-relaxed mt-4">HP, Canon, Brother, Epson - all top models in stock with free expert setup on every order.</p>
+        <a href="products.php" class="mt-6 inline-flex w-fit items-center gap-2 bg-navy-600 hover:bg-navy-700 text-white font-bold px-6 py-3 rounded-lg transition text-sm">Shop All Brands</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <a href="products.php?brand=HP" class="bg-white rounded-xl p-4 min-h-[150px] flex flex-col items-center justify-center text-center shadow-sm">
+          <div class="text-5xl font-black text-sky-600 leading-none">hp</div>
+          <p class="mt-5 text-sm font-bold text-slate-700">HP Printers</p>
+          <span class="mt-4 text-xs font-bold text-navy-600">View Models</span>
+        </a>
+        <a href="products.php?brand=Canon" class="bg-white rounded-xl p-4 min-h-[150px] flex flex-col items-center justify-center text-center shadow-sm">
+          <div class="text-3xl font-black text-red-600 leading-none">Canon</div>
+          <p class="mt-6 text-sm font-bold text-slate-700">Canon Printers</p>
+          <span class="mt-4 text-xs font-bold text-navy-600">View Models</span>
+        </a>
+        <a href="products.php?brand=Brother" class="bg-white rounded-xl p-4 min-h-[150px] flex flex-col items-center justify-center text-center shadow-sm">
+          <div class="text-2xl font-black text-blue-700 leading-none">brother</div>
+          <p class="mt-7 text-sm font-bold text-slate-700">Brother Printers</p>
+          <span class="mt-4 text-xs font-bold text-navy-600">View Models</span>
+        </a>
+        <a href="products.php?brand=Epson" class="bg-white rounded-xl p-4 min-h-[150px] flex flex-col items-center justify-center text-center shadow-sm">
+          <div class="text-2xl font-black text-blue-700 leading-none">EPSON</div>
+          <p class="mt-7 text-sm font-bold text-slate-700">Epson Printers</p>
+          <span class="mt-4 text-xs font-bold text-navy-600">View Models</span>
+        </a>
+        <a href="products.php?brand=Xerox" class="bg-white rounded-xl p-4 min-h-[150px] flex flex-col items-center justify-center text-center shadow-sm">
+          <div class="text-2xl font-black text-red-600 leading-none">xerox</div>
+          <p class="mt-7 text-sm font-bold text-slate-700">Xerox Printers</p>
+          <span class="mt-4 text-xs font-bold text-navy-600">View Models</span>
+        </a>
       </div>
     </div>
   </div>
@@ -974,6 +1125,47 @@
   </div>
 </section>
 
+<!-- ======= BUSINESS SOLUTIONS STRIP ======= -->
+<section class="px-5 py-8 bg-white">
+  <div class="max-w-7xl mx-auto overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-slate-100 shadow-sm">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr_0.8fr] gap-6 items-center">
+      <div class="p-7 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-black text-slate-900">Business Printing Solutions</h2>
+        <p class="text-slate-600 text-sm leading-relaxed mt-3 max-w-md">Power your business with reliable printers, expert setup, and ongoing support.</p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="products.php?cat=business" class="inline-flex items-center justify-center bg-navy-600 hover:bg-navy-700 text-white font-bold px-6 py-3 rounded-lg text-sm transition">Explore Business Solutions</a>
+          <a href="contact.php" class="inline-flex items-center justify-center bg-white border border-navy-300 text-navy-700 hover:bg-navy-50 font-bold px-6 py-3 rounded-lg text-sm transition">Talk to an Expert</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-7 lg:px-0 py-2">
+        <div class="text-center">
+          <div class="mx-auto w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-navy-600 text-2xl"><i class="ri-coupon-3-line"></i></div>
+          <p class="mt-2 text-xs font-bold text-slate-700">Volume<br/>Discounts</p>
+        </div>
+        <div class="text-center">
+          <div class="mx-auto w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-navy-600 text-2xl"><i class="ri-customer-service-2-line"></i></div>
+          <p class="mt-2 text-xs font-bold text-slate-700">Dedicated<br/>Support</p>
+        </div>
+        <div class="text-center">
+          <div class="mx-auto w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-navy-600 text-2xl"><i class="ri-settings-4-line"></i></div>
+          <p class="mt-2 text-xs font-bold text-slate-700">Flexible<br/>Leasing</p>
+        </div>
+        <div class="text-center">
+          <div class="mx-auto w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-navy-600 text-2xl"><i class="ri-rocket-line"></i></div>
+          <p class="mt-2 text-xs font-bold text-slate-700">Fast<br/>Deployment</p>
+        </div>
+      </div>
+      <div class="hidden lg:flex min-h-[170px] items-center justify-center bg-white/55">
+        <div class="relative w-full h-full min-h-[170px] flex items-center justify-center">
+          <div class="absolute inset-0 bg-gradient-to-l from-white to-transparent"></div>
+          <i class="ri-building-4-line text-slate-300 text-[110px]"></i>
+          <i class="ri-printer-fill text-slate-500 text-[96px] -ml-8"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ======= TESTIMONIALS ======= -->
 <section class="py-14 px-5 bg-white">
   <div class="max-w-7xl mx-auto">
@@ -1122,7 +1314,7 @@
 </footer>
 
 <!-- ======= WISHLIST DRAWER ======= -->
-<div id="wl-drawer" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+<div id="wl-drawer" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
   <div class="flex items-center justify-between p-5 border-b bg-red-500 text-white">
     <h3 class="font-bold flex items-center gap-2"><i class="ri-heart-3-line text-lg"></i> My Wishlist</h3>
     <button onclick="toggleWishlistDrawer()" class="hover:bg-red-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-close-line text-lg"></i></button>
