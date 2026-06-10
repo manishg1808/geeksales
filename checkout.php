@@ -1,6 +1,7 @@
 <?php
 // Backend logic has been moved to api/orders.php
 // This file now serves only the frontend HTML.
+require_once __DIR__ . '/admin/includes/db.php';
 ?>
 
 <!DOCTYPE html>
@@ -8,7 +9,17 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Checkout – GeekSupportSales</title>
+  <?php 
+  $seo = get_page_seo(); 
+  ?>
+  <title><?php echo e($seo['title']); ?></title>
+  <meta name="description" content="<?php echo e($seo['description']); ?>" />
+  <meta name="keywords" content="<?php echo e($seo['keywords']); ?>" />
+  <?php
+  render_google_site_verification();
+  render_google_analytics();
+  render_google_tag_manager_head();
+  ?>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -47,6 +58,7 @@
   </style>
 </head>
 <body class="font-sans bg-slate-50 text-slate-800 antialiased">
+<?php render_google_tag_manager_body(); ?>
 
 <!-- NAVBAR (minimal) -->
 <header class="brand-gradient text-white shadow-sm">
@@ -123,10 +135,7 @@
           <input type="tel" id="f-phone" class="form-field" placeholder="+1 (555) 000-0000"/>
         </div>
       </div>
-      <div class="mt-4 flex items-center gap-2">
-        <input type="checkbox" id="create-account" class="accent-navy-600"/>
-        <label for="create-account" class="text-xs text-slate-500">Create an account for faster checkout next time</label>
-      </div>
+
       <button onclick="goStep(2)" class="mt-5 btn-gradient text-white font-bold px-8 py-3 rounded-xl transition text-sm flex items-center gap-2">
         Continue to Shipping <i class="ri-arrow-right-line"></i>
       </button>
@@ -162,34 +171,7 @@
         </div>
       </div>
 
-      <!-- Shipping method -->
-      <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-6 mb-3">Shipping Method</p>
-      <div class="space-y-3">
-        <label class="pay-method selected flex items-center gap-4 cursor-pointer" id="ship-free" onclick="selectShipping('free',this)">
-          <input type="radio" name="shipping" value="free" checked class="accent-navy-600"/>
-          <div class="flex-1">
-            <p class="font-bold text-slate-800 text-sm">Standard Shipping</p>
-            <p class="text-xs text-slate-400">3–5 business days</p>
-          </div>
-          <span class="font-black text-emerald-600 text-sm">FREE</span>
-        </label>
-        <label class="pay-method flex items-center gap-4 cursor-pointer" id="ship-express" onclick="selectShipping('express',this)">
-          <input type="radio" name="shipping" value="express" class="accent-navy-600"/>
-          <div class="flex-1">
-            <p class="font-bold text-slate-800 text-sm">Express Shipping</p>
-            <p class="text-xs text-slate-400">1–2 business days</p>
-          </div>
-          <span class="font-black text-slate-800 text-sm">$12.99</span>
-        </label>
-        <label class="pay-method flex items-center gap-4 cursor-pointer" id="ship-overnight" onclick="selectShipping('overnight',this)">
-          <input type="radio" name="shipping" value="overnight" class="accent-navy-600"/>
-          <div class="flex-1">
-            <p class="font-bold text-slate-800 text-sm">Overnight Shipping</p>
-            <p class="text-xs text-slate-400">Next business day</p>
-          </div>
-          <span class="font-black text-slate-800 text-sm">$24.99</span>
-        </label>
-      </div>
+
 
       <div class="flex gap-3 mt-5">
         <button onclick="goStep(1)" class="border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-xl transition text-sm hover:border-navy-500 hover:text-navy-600 flex items-center gap-2">
@@ -208,63 +190,16 @@
         Payment Method
       </h2>
 
-      <!-- Payment tabs -->
-      <div class="flex gap-3 mb-5 flex-wrap">
-        <button onclick="selectPayTab('card',this)" id="pay-tab-card" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-navy-600 bg-navy-50 text-navy-700 font-bold text-sm transition">
-          <i class="ri-bank-card-line"></i> Credit / Debit Card
-        </button>
-        <button onclick="selectPayTab('paypal',this)" id="pay-tab-paypal" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-semibold text-sm hover:border-navy-400 transition">
-          <i class="ri-paypal-line"></i> PayPal
-        </button>
-        <button onclick="selectPayTab('apple',this)" id="pay-tab-apple" class="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-500 font-semibold text-sm hover:border-navy-400 transition">
-          <i class="ri-apple-line"></i> Apple Pay
-        </button>
-      </div>
-
-      <!-- Card form -->
-      <div id="pay-card" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Card Number *</label>
-          <div class="relative">
-            <input type="text" id="f-card" class="form-field pr-16" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)"/>
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1 text-slate-300 text-xl">
-              <i class="ri-visa-line"></i><i class="ri-mastercard-line"></i>
-            </div>
-          </div>
+      <!-- Cash on Delivery Option -->
+      <div class="pay-method selected flex items-center gap-4 cursor-default mb-5">
+        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
+          <i class="ri-truck-line text-xl"></i>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Expiry Date *</label>
-            <input type="text" id="f-expiry" class="form-field" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)"/>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1.5">CVV *</label>
-            <div class="relative">
-              <input type="password" id="f-cvv" class="form-field pr-10" placeholder="•••" maxlength="4"/>
-              <i class="ri-question-line absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer" title="3-digit code on back of card"></i>
-            </div>
-          </div>
+        <div class="flex-1">
+          <p class="font-bold text-slate-800 text-sm">Cash on Delivery (COD)</p>
+          <p class="text-xs text-slate-400">Pay with cash upon delivery of your order.</p>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 mb-1.5">Name on Card *</label>
-          <input type="text" id="f-cardname" class="form-field" placeholder="John Smith"/>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="checkbox" id="save-card" class="accent-navy-600"/>
-          <label for="save-card" class="text-xs text-slate-500">Save card for future purchases</label>
-        </div>
-      </div>
-
-      <!-- PayPal -->
-      <div id="pay-paypal" class="hidden text-center py-8">
-        <i class="ri-paypal-line text-5xl text-blue-500 mb-3"></i>
-        <p class="text-slate-600 text-sm">You'll be redirected to PayPal to complete your payment securely.</p>
-      </div>
-
-      <!-- Apple Pay -->
-      <div id="pay-apple" class="hidden text-center py-8">
-        <i class="ri-apple-line text-5xl text-slate-800 mb-3"></i>
-        <p class="text-slate-600 text-sm">Use Touch ID or Face ID to pay with Apple Pay.</p>
+        <i class="ri-checkbox-circle-fill text-emerald-500 text-xl"></i>
       </div>
 
       <!-- Promo code -->
@@ -325,12 +260,9 @@
       </div>
 
       <!-- Payment icons -->
-      <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 text-slate-400 text-2xl">
-        <i class="ri-visa-line" title="Visa"></i>
-        <i class="ri-mastercard-line" title="Mastercard"></i>
-        <i class="ri-paypal-line" title="PayPal"></i>
-        <i class="ri-apple-line" title="Apple Pay"></i>
-        <i class="ri-secure-payment-line" title="Secure"></i>
+      <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 text-emerald-600 text-sm font-semibold">
+        <i class="ri-truck-line text-lg"></i>
+        <span>Cash on Delivery (COD) Enabled</span>
       </div>
     </div>
   </div>

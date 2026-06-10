@@ -8,6 +8,17 @@ let wishlist = wlLoad(); // load from localStorage via wishlist.js
 let currentPage = 1;
 const PRODUCTS_PER_PAGE = 12;
 
+// ===== UTILS =====
+const debounce = window.debounce || function (func, delay) {
+  let timeoutId;
+  return function (...args) {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+};
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
@@ -24,8 +35,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   const searchInput = document.getElementById('search-input');
-  if (searchInput && search !== '') {
-    searchInput.value = search;
+  if (searchInput) {
+    if (search !== '') {
+      searchInput.value = search;
+    }
+    // Add debounced input event listener
+    searchInput.addEventListener('input', debounce(() => {
+      applyFilters();
+    }, 300));
   }
   document.querySelectorAll('[data-product-search-form]').forEach(form => {
     form.addEventListener('submit', event => {
@@ -55,6 +72,7 @@ async function loadProductsFromApi() {
 function normalizeProductForList(p) {
   const price = Number(p.price) || 0;
   const oldPrice = Number(p.oldPrice ?? p.old_price ?? 0) || 0;
+  const rating = Number(p.rating);
   const cat = p.cat || (p.category_slug === 'all-in-one' ? 'allinone' : p.category_slug === 'ink-toner' ? 'ink' : p.category_slug) || 'inkjet';
   return {
     ...p,
@@ -64,7 +82,7 @@ function normalizeProductForList(p) {
     cat,
     price,
     oldPrice,
-    rating: Number(p.rating) || 4.7,
+    rating: Number.isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0,
     reviews: Number(p.reviews) || 120,
     badge: p.badge || '',
     badgeColor: p.badgeColor || 'navy',
@@ -75,6 +93,7 @@ function normalizeProductForList(p) {
     desc: p.desc || p.description || '',
     ppm: p.ppm ? Number(p.ppm) : null,
     newest: Boolean(p.newest),
+    image_url: p.image_url || p.imageUrl || '',
     discount: Number(p.discount) || (oldPrice > price && oldPrice > 0 ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0),
   };
 }
@@ -260,7 +279,7 @@ function gridCard(p) {
   <div class="card-lift bg-white border border-slate-200 rounded-2xl overflow-hidden group relative">
     <!-- Image area -->
     <div class="relative h-48 flex items-center justify-center p-6" style="background:${p.color}">
-      <i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill transition-transform duration-300 group-hover:scale-110" style="font-size:90px;color:${p.iconColor};line-height:1"></i>
+      ${p.image_url ? `<img src="${p.image_url}" class="transition-transform duration-300 group-hover:scale-110 w-full h-full object-contain">` : `<i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill transition-transform duration-300 group-hover:scale-110" style="font-size:90px;color:${p.iconColor};line-height:1"></i>`}
       ${p.badge ? `<span class="absolute top-3 left-3 ${badgeCls(p.badgeColor)} text-white text-[10px] font-bold px-2 py-0.5 rounded-md ${p.badgeColor === 'red' ? 'badge-pulse' : ''}">${p.badge}</span>` : ''}
       <button onclick="toggleWishlist(${p.id},this)" data-wl-id="${p.id}" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow transition">
         <i class="${wl ? 'ri-heart-fill text-red-500' : 'ri-heart-3-line text-slate-400 hover:text-red-400'} text-base"></i>
@@ -283,7 +302,8 @@ function gridCard(p) {
       <!-- Stars -->
       <div class="flex items-center gap-1 mt-2 text-amber2-400 text-xs">
         ${starsHtml(p.rating)}
-        <span class="text-slate-400 ml-1">(${p.reviews})</span>
+        <span class="text-slate-500 ml-1 font-semibold">${p.rating.toFixed(1)}</span>
+        <span class="text-slate-400">(${p.reviews})</span>
       </div>
       <!-- Features -->
       <div class="flex flex-wrap gap-1 mt-2">
@@ -297,10 +317,10 @@ function gridCard(p) {
       </div>
       <!-- CTA -->
       <div class="grid grid-cols-[48px_1fr] gap-2 mt-3 items-stretch">
-        <button onclick="addToCart('${p.name.replace(/'/g, "\\'")}',${p.price})" class="h-10 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add ${p.name.replace(/"/g, '&quot;')} to cart">
+        <button onclick="addToCart('${p.name.replace(/'/g, "\\'")}',${p.price},'${(p.image_url || '').replace(/'/g, "\\'")}')" class="h-10 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add ${p.name.replace(/"/g, '&quot;')} to cart">
           <i class="ri-shopping-cart-2-line text-[26px] leading-none"></i>
         </button>
-        <button onclick="buyNow('${p.name.replace(/'/g, "\\'")}',${p.price})" class="btn-gradient h-10 w-full text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5">
+        <button onclick="buyNow('${p.name.replace(/'/g, "\\'")}',${p.price},'${(p.image_url || '').replace(/'/g, "\\'")}')" class="btn-gradient h-10 w-full text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5">
           <i class="ri-flashlight-line"></i> Buy Now
         </button>
       </div>
@@ -315,7 +335,7 @@ function listCard(p) {
   return `
   <div class="card-lift bg-white border border-slate-200 rounded-2xl overflow-hidden flex gap-0">
     <div class="w-40 sm:w-52 shrink-0 flex items-center justify-center p-5 relative" style="background:${p.color}">
-      <i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill" style="font-size:70px;color:${p.iconColor};line-height:1"></i>
+      ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-contain p-2">` : `<i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill" style="font-size:70px;color:${p.iconColor};line-height:1"></i>`}
       ${p.badge ? `<span class="absolute top-2 left-2 ${badgeCls(p.badgeColor)} text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">${p.badge}</span>` : ''}
     </div>
     <div class="flex-1 p-5 flex flex-col justify-between">
@@ -331,7 +351,7 @@ function listCard(p) {
           </button>
         </div>
         <div class="flex items-center gap-1 mt-2 text-amber2-400 text-xs">
-          ${starsHtml(p.rating)}<span class="text-slate-400 ml-1">(${p.reviews})</span>
+          ${starsHtml(p.rating)}<span class="text-slate-500 ml-1 font-semibold">${p.rating.toFixed(1)}</span><span class="text-slate-400">(${p.reviews})</span>
         </div>
         <div class="flex flex-wrap gap-1 mt-2">
           ${p.features.map(f => `<span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-medium capitalize">${f}</span>`).join('')}
@@ -350,10 +370,10 @@ function listCard(p) {
           <a href="product-detail.php?id=${p.id}" class="border border-navy-200 bg-navy-50 hover:bg-navy-100 text-navy-700 font-semibold px-4 py-2 rounded-xl transition text-xs flex items-center gap-1.5">
             <i class="ri-information-line"></i> Details
           </a>
-          <button onclick="addToCart('${p.name.replace(/'/g, "\\'")}',${p.price})" class="text-navy-700 hover:text-blue-700 transition w-12 h-10 flex items-center justify-center" title="Add to Cart" aria-label="Add ${p.name.replace(/"/g, '&quot;')} to cart">
+          <button onclick="addToCart('${p.name.replace(/'/g, "\\'")}',${p.price},'${(p.image_url || '').replace(/'/g, "\\'")}')" class="text-navy-700 hover:text-blue-700 transition w-12 h-10 flex items-center justify-center" title="Add to Cart" aria-label="Add ${p.name.replace(/"/g, '&quot;')} to cart">
             <i class="ri-shopping-cart-2-line text-[26px] leading-none"></i>
           </button>
-          <button onclick="buyNow('${p.name.replace(/'/g, "\\'")}',${p.price})" class="btn-gradient text-white font-bold px-5 py-2 rounded-xl transition text-xs flex items-center gap-1.5">
+          <button onclick="buyNow('${p.name.replace(/'/g, "\\'")}',${p.price},'${(p.image_url || '').replace(/'/g, "\\'")}')" class="btn-gradient text-white font-bold px-5 py-2 rounded-xl transition text-xs flex items-center gap-1.5">
             <i class="ri-flashlight-line"></i> Buy Now
           </button>
         </div>
@@ -370,7 +390,7 @@ function openQV(id) {
   document.getElementById('qv-content').innerHTML = `
     <div class="flex flex-col md:flex-row gap-8">
       <div class="md:w-64 shrink-0 rounded-2xl flex items-center justify-center p-8 h-56 md:h-auto" style="background:${p.color}">
-        <i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill" style="font-size:110px;color:${p.iconColor};line-height:1"></i>
+        ${p.image_url ? `<img src="${p.image_url}" class="w-full h-full object-contain p-4">` : `<i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill" style="font-size:110px;color:${p.iconColor};line-height:1"></i>`}
       </div>
       <div class="flex-1">
         <div class="flex items-center gap-2 mb-1">
@@ -379,7 +399,7 @@ function openQV(id) {
         </div>
         <h2 class="text-2xl font-black text-slate-800">${p.name}</h2>
         <div class="flex items-center gap-1 mt-2 text-amber2-400 text-sm">
-          ${starsHtml(p.rating)}<span class="text-slate-400 text-xs ml-1">${p.rating} · ${p.reviews} reviews</span>
+          ${starsHtml(p.rating)}<span class="text-slate-400 text-xs ml-1">${p.rating.toFixed(1)} · ${p.reviews} reviews</span>
         </div>
         <p class="text-slate-500 text-sm mt-3 leading-relaxed">${p.desc}</p>
         <!-- Specs -->
@@ -397,17 +417,17 @@ function openQV(id) {
           ${saved ? `<span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded-lg">Save $${saved}</span>` : ''}
         </div>
         <div class="grid grid-cols-[56px_1fr] gap-3 mt-4 items-stretch">
-          <button onclick="addToCart('${p.name.replace(/'/g, "\\'")}',${p.price});closeQV()" class="h-12 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add ${p.name.replace(/"/g, '&quot;')} to cart">
+          <button onclick="addToCart('${p.name.replace(/'/g, "\\'")}',${p.price},'${(p.image_url || '').replace(/'/g, "\\'")}');closeQV()" class="h-12 w-full text-navy-700 hover:text-blue-700 transition flex items-center justify-center" title="Add to Cart" aria-label="Add ${p.name.replace(/"/g, '&quot;')} to cart">
             <i class="ri-shopping-cart-2-line text-[30px] leading-none"></i>
           </button>
-          <button onclick="buyNow('${p.name.replace(/'/g, "\\'")}',${p.price})" class="btn-gradient h-12 w-full text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm">
+          <button onclick="buyNow('${p.name.replace(/'/g, "\\'")}',${p.price},'${(p.image_url || '').replace(/'/g, "\\'")}')" class="btn-gradient h-12 w-full text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm">
             <i class="ri-flashlight-line"></i> Buy Now
           </button>
         </div>
         <div class="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
           <span class="flex items-center gap-1"><i class="ri-truck-line text-navy-500"></i> Free shipping $99+</span>
           <span class="flex items-center gap-1"><i class="ri-shield-check-line text-navy-500"></i> 2-Year Warranty</span>
-          <span class="flex items-center gap-1"><i class="ri-refresh-line text-navy-500"></i> 30-Day Returns</span>
+          <span class="flex items-center gap-1"><i class="ri-refresh-line text-navy-500"></i> 7-Day Returns</span>
         </div>
       </div>
     </div>`;
@@ -504,17 +524,19 @@ function toggleCart() {
   o.classList.toggle('hidden', open);
 }
 
-function addToCart(name, price) {
+function addToCart(name, price, imageUrl = '') {
   const ex = cart.find(i => i.name === name);
-  ex ? ex.qty++ : cart.push({ name, price, qty: 1 });
+  ex ? ex.qty++ : cart.push({ name, price, qty: 1, image_url: imageUrl });
+  if (ex && imageUrl && !ex.image_url) ex.image_url = imageUrl;
   localStorage.setItem('gss_cart', JSON.stringify(cart));
   renderCart();
   showToast(`${name.split(' ').slice(0, 3).join(' ')} added to cart!`);
 }
 
-function buyNow(name, price) {
+function buyNow(name, price, imageUrl = '') {
   const ex = cart.find(i => i.name === name);
-  ex ? ex.qty++ : cart.push({ name, price, qty: 1 });
+  ex ? ex.qty++ : cart.push({ name, price, qty: 1, image_url: imageUrl });
+  if (ex && imageUrl && !ex.image_url) ex.image_url = imageUrl;
   localStorage.setItem('gss_cart', JSON.stringify(cart));
   window.location.href = 'checkout.php';
 }
@@ -539,7 +561,9 @@ function renderCart() {
   }
   el.innerHTML = cart.map(item => `
     <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
-      <div class="bg-navy-50 rounded-lg p-2 shrink-0"><i class="ri-printer-fill text-navy-600 text-lg"></i></div>
+      <div class="bg-navy-50 rounded-lg w-11 h-11 flex items-center justify-center shrink-0 overflow-hidden">
+        ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" class="w-full h-full object-contain p-1">` : `<i class="ri-printer-fill text-navy-600 text-lg"></i>`}
+      </div>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-semibold text-slate-800 truncate">${item.name}</p>
         <p class="text-xs text-slate-400">Qty: ${item.qty} × $${item.price.toFixed(2)}</p>

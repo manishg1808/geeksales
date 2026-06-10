@@ -42,7 +42,7 @@ $statusClasses = [
         <div class="bg-white rounded-2xl border border-slate-200">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100"><h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="ri-award-line text-amber2-500"></i> Top Brands</h3><a href="?page=brands" class="text-navy-600 text-xs font-semibold hover:underline">View All</a></div>
             <div class="p-5 space-y-4">
-                <?php $maxBrand = max(1, (int)($topBrands[0]['total'] ?? 1)); foreach($topBrands as $brand): $pct = (int)round(((int)$brand['total'] / $maxBrand) * 100); ?>
+                <?php $maxBrand = !empty($topBrands) ? max(1, (int)$topBrands[0]['total']) : 1; foreach($topBrands as $brand): $pct = (int)round(((int)$brand['total'] / $maxBrand) * 100); ?>
                 <div><div class="flex items-center justify-between mb-1.5"><span class="text-sm font-semibold text-slate-700"><?php echo e($brand['name']); ?></span><span class="text-sm font-bold text-slate-800"><?php echo (int)$brand['total']; ?></span></div><div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-navy-600 rounded-full" style="width:<?php echo $pct; ?>%"></div></div></div>
                 <?php endforeach; ?>
             </div>

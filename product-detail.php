@@ -1,9 +1,60 @@
+<?php 
+require_once __DIR__ . '/admin/includes/db.php'; 
+
+// Fetch product dynamically for server-side SEO tags
+$product = null;
+$productId = 1; // Default fallback
+$metaTitle = '';
+$metaDesc = '';
+$metaKeywords = '';
+
+$db = db();
+$idParam = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$slugParam = isset($_GET['slug']) ? trim($_GET['slug']) : '';
+
+try {
+    if ($idParam > 0) {
+        $stmt = $db->prepare('SELECT * FROM products WHERE id = ? AND status = "active"');
+        $stmt->execute([$idParam]);
+        $product = $stmt->fetch();
+    } elseif ($slugParam !== '') {
+        $stmt = $db->prepare('SELECT * FROM products WHERE slug = ? AND status = "active"');
+        $stmt->execute([$slugParam]);
+        $product = $stmt->fetch();
+    }
+
+    if ($product) {
+        $productId = (int)$product['id'];
+        $metaTitle = $product['meta_title'] ?: $product['name'] . ' - Geek Support LLc';
+        $metaDesc = $product['meta_description'] ?: ($product['short_description'] ?: $product['description']);
+        $metaKeywords = $product['meta_keywords'] ?: ($settings['default_meta_keywords'] ?? '');
+    }
+} catch (Throwable $e) {
+    // ignore
+}
+
+// Fallback to page SEO if product not found
+if (!$product) {
+    $seo = get_page_seo('product-detail.php');
+    $metaTitle = $seo['title'];
+    $metaDesc = $seo['description'];
+    $metaKeywords = $seo['keywords'];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Detail – GeekSupportSales</title>
+  <link rel="icon" type="image/svg+xml" href="IMAGE/geeksupport_unique_simple_icon.svg">
+  <title><?php echo e($metaTitle); ?></title>
+  <meta name="description" content="<?php echo e($metaDesc); ?>" />
+  <meta name="keywords" content="<?php echo e($metaKeywords); ?>" />
+  <?php
+  render_google_site_verification();
+  render_google_analytics();
+  render_google_tag_manager_head();
+  ?>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -54,6 +105,7 @@
   </style>
 </head>
 <body class="font-sans bg-slate-50 text-slate-800 antialiased">
+<?php render_google_tag_manager_body(); ?>
 
 <!-- TOP BAR -->
 <div class="brand-gradient text-white hidden md:block">
@@ -89,11 +141,12 @@
 
     <!-- Logo -->
     <a href="index.php" class="flex items-center gap-2.5 shrink-0">
-      <div class="bg-navy-600 rounded-lg w-8 h-8 flex items-center justify-center">
-        <i class="ri-printer-fill text-white text-sm"></i>
+      <div class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
+        <img src="IMAGE/geeksupport_unique_simple_icon.svg" alt="Geek Support LLc" class="w-6 h-6 sm:w-7 sm:h-7 object-contain">
       </div>
-      <span class="text-[15px] font-black tracking-tight leading-none">
-        <span class="text-navy-600">Geek</span><span class="text-amber2-500">Support</span><span class="text-slate-800">Sales</span>
+      <span class="flex flex-col justify-center leading-none">
+        <span class="text-[13px] sm:text-[15px] font-black text-slate-800 whitespace-nowrap">Geek Support LLc</span>
+        <span class="mt-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-wide sm:tracking-widest text-slate-400 whitespace-nowrap">fast secure remote help</span>
       </span>
     </a>
 
@@ -105,14 +158,14 @@
     </nav>
 
     <!-- Search -->
-    <div class="hidden md:flex flex-1 max-w-sm ml-auto">
+    <form action="products.php" method="GET" class="hidden md:flex flex-1 max-w-sm ml-auto relative header-search-form">
       <div class="flex w-full h-9 rounded-lg border border-slate-200 bg-slate-50 hover:border-slate-300 focus-within:border-navy-400 focus-within:bg-white overflow-hidden transition">
-        <input type="text" placeholder="Search printers, ink, toner…" class="flex-1 px-3 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400"/>
-        <button class="px-3 text-slate-400 hover:text-navy-600 transition">
+        <input name="q" type="text" placeholder="Search printers, brand, model..." class="flex-1 px-3 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400 header-search-input" autocomplete="off"/>
+        <button type="submit" class="px-3 text-slate-400 hover:text-navy-600 transition" aria-label="Search products">
           <i class="ri-search-2-line text-base"></i>
         </button>
       </div>
-    </div>
+    </form>
 
     <!-- Divider -->
     <div class="hidden sm:block w-px h-6 bg-slate-200 shrink-0"></div>
@@ -333,14 +386,6 @@
               <span class="text-xs text-slate-400 ml-2">Max 10</span>
             </div>
 
-            <!-- Color/variant (decorative) -->
-            <p class="text-xs font-semibold text-slate-500 mb-2">Color</p>
-            <div class="flex gap-2 mb-5">
-              <button class="w-7 h-7 rounded-full bg-slate-800 border-2 border-navy-600 ring-2 ring-navy-200" title="Black"></button>
-              <button class="w-7 h-7 rounded-full bg-white border-2 border-slate-300 hover:border-navy-400 transition" title="White"></button>
-              <button class="w-7 h-7 rounded-full bg-slate-400 border-2 border-slate-300 hover:border-navy-400 transition" title="Silver"></button>
-            </div>
-
             <!-- CTAs -->
             <button id="atc-btn" onclick="addToCartDetail()" class="w-full btn-gradient text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm mb-3">
               <i class="ri-shopping-cart-2-line"></i> Add to Cart
@@ -434,20 +479,14 @@
 
 <script src="js/wishlist.js"></script>
 <script src="js/taxonomy.js"></script>
+<script>
+  window.productId = <?php echo $productId; ?>;
+</script>
 <script src="js/product-detail.js"></script>
 
 
 
 <!-- FOOTER -->
-<footer class="bg-slate-900 text-slate-400 pt-12 pb-8 px-5 mt-6">
-  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-600 border-t border-slate-800 pt-6">
-    <p>© 2025 GeekSupportSales LLC. All rights reserved.</p>
-    <div class="flex gap-4">
-      <a href="index.php" class="hover:text-white transition">Home</a>
-      <a href="products.php" class="hover:text-white transition">Products</a>
-      <a href="contact.php" class="hover:text-white transition">Contact</a>
-    </div>
-  </div>
-</footer>
+<?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
 </html>

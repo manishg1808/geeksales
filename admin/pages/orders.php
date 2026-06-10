@@ -5,7 +5,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['form_action'] ?
         $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?')->execute([$status, (int)$_POST['id']]);
         set_flash('Order status updated.');
     }
-    redirect_admin('orders');
+    if (isset($_POST['redirect_to_view']) && $_POST['redirect_to_view'] === '1') {
+        redirect_admin('orders&action=view&id=' . (int)$_POST['id']);
+    } else {
+        redirect_admin('orders');
+    }
 } elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['form_action'] ?? '') === 'delete_multiple') {
     $ids = $_POST['selected_ids'] ?? [];
     if (!empty($ids) && is_array($ids)) {
@@ -23,6 +27,176 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['form_action'] ?
     admin_delete_record($pdo, 'orders', (int)($_POST['id'] ?? 0), 'Order');
     redirect_admin('orders');
 }
+
+$action = $_GET['action'] ?? '';
+$id = (int)($_GET['id'] ?? 0);
+
+if ($action === 'view' && $id > 0) {
+    $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
+    $stmt->execute([$id]);
+    $o = $stmt->fetch();
+    
+    if (!$o) {
+        set_flash('Order not found.', 'error');
+        redirect_admin('orders');
+    }
+    
+    $customerName = $o['billing_name'] ?? $o['customer_name'] ?? 'N/A';
+    $totalAmount = $o['total_amount'] ?? $o['amount'] ?? 0;
+    $paymentMethod = $o['payment_method'] ?? 'manual';
+    $orderDate = $o['created_at'] ?? $o['order_date'] ?? 'N/A';
+    $status = $o['status'] ?? 'pending';
+    
+    $statusMap = [
+        'pending' => ['class'=>'bg-amber2-100 text-amber2-700 border-amber2-200', 'label'=>'Pending'],
+        'shipped' => ['class'=>'bg-navy-100 text-navy-700 border-navy-200', 'label'=>'Shipped'],
+        'delivered' => ['class'=>'bg-emerald-100 text-emerald-700 border-emerald-200', 'label'=>'Delivered'],
+        'cancelled' => ['class'=>'bg-red-100 text-red-700 border-red-200', 'label'=>'Cancelled'],
+    ];
+    $s = $statusMap[$status] ?? $statusMap['pending'];
+    ?>
+    <div class="animate-slide">
+        <!-- Back button & Title -->
+        <div class="flex items-center gap-4 mb-6">
+            <a href="?page=orders" class="bg-white border border-slate-200 hover:border-slate-300 text-slate-600 w-10 h-10 rounded-xl flex items-center justify-center transition shadow-sm"><i class="ri-arrow-left-line text-lg"></i></a>
+            <div>
+                <h1 class="text-2xl font-black text-slate-800">Order #<?php echo e($o['order_no']); ?></h1>
+                <p class="text-xs text-slate-400 mt-0.5">Placed on <?php echo e($orderDate); ?></p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left: Order Details & Products -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Products Card -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2"><i class="ri-printer-line text-navy-600"></i> Ordered Items</h3>
+                    <div class="divide-y divide-slate-100">
+                        <?php 
+                        $items = explode(', ', $o['product_name']);
+                        foreach ($items as $item): 
+                            if (trim($item) === '') continue;
+                            $qty = 1;
+                            $name = $item;
+                            if (preg_match('/^(.*?)\s*\(x(\d+)\)$/', $item, $matches)) {
+                                $name = $matches[1];
+                                $qty = (int)$matches[2];
+                            }
+                        ?>
+                            <div class="py-3 flex items-center gap-4">
+                                <div class="bg-navy-50 rounded-xl w-12 h-12 flex items-center justify-center shrink-0 text-navy-600"><i class="ri-printer-fill text-xl"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-slate-800 leading-normal"><?php echo e($name); ?></p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Quantity: <span class="font-bold text-slate-700"><?php echo $qty; ?></span></p>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="border-t border-slate-100 pt-4 mt-4 flex justify-between items-center text-slate-800">
+                        <span class="text-sm font-semibold text-slate-500">Grand Total:</span>
+                        <span class="text-xl font-black text-navy-600">$<?php echo number_format((float)$totalAmount, 2); ?></span>
+                    </div>
+                </div>
+
+                <!-- Customer Details Card -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2"><i class="ri-user-line text-navy-600"></i> Customer Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</p>
+                            <p class="font-bold text-slate-800"><?php echo e($customerName); ?></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email Address</p>
+                            <p class="font-bold text-slate-800"><?php echo e($o['email'] ?: 'N/A'); ?></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Phone Number</p>
+                            <p class="font-bold text-slate-800"><?php echo e($o['phone'] ?: 'N/A'); ?></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Payment Method</p>
+                            <span class="inline-block px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-700 rounded-lg mt-0.5"><?php echo e(ucfirst($paymentMethod)); ?></span>
+                        </div>
+                        <div class="md:col-span-2 border-t border-slate-100 pt-4 mt-2">
+                            <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i class="ri-map-pin-line text-navy-600"></i> Shipping Address</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600">
+                                <div>
+                                    <p class="font-semibold text-slate-400 mb-0.5">Street Address</p>
+                                    <p class="text-slate-800 font-bold text-sm"><?php echo e($o['address'] ?: 'N/A'); ?></p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-400 mb-0.5">City, State, ZIP</p>
+                                    <p class="text-slate-800 font-bold text-sm">
+                                        <?php 
+                                        $cityStateZip = [];
+                                        if (!empty($o['city'])) $cityStateZip[] = $o['city'];
+                                        if (!empty($o['state'])) $cityStateZip[] = $o['state'];
+                                        if (!empty($o['zip'])) $cityStateZip[] = $o['zip'];
+                                        echo $cityStateZip ? implode(', ', $cityStateZip) : 'N/A';
+                                        ?>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right: Order Status Management -->
+            <div class="space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                    <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2"><i class="ri-settings-4-line text-navy-600"></i> Manage Status</h3>
+                    
+                    <div class="mb-5">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Current Status</p>
+                        <span class="inline-block px-3 py-1 text-sm font-bold rounded-full border <?php echo $s['class']; ?>"><?php echo $s['label']; ?></span>
+                    </div>
+                    
+                    <form method="POST" action="">
+                        <input type="hidden" name="form_action" value="update_order">
+                        <input type="hidden" name="id" value="<?php echo $id; ?>">
+                        <input type="hidden" name="redirect_to_view" value="1">
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Change Status</label>
+                            <select name="status" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white outline-none focus:border-navy-600">
+                                <option value="pending" <?php echo $status==='pending'?'selected':''; ?>>Pending</option>
+                                <option value="shipped" <?php echo $status==='shipped'?'selected':''; ?>>Shipped</option>
+                                <option value="delivered" <?php echo $status==='delivered'?'selected':''; ?>>Delivered</option>
+                                <option value="cancelled" <?php echo $status==='cancelled'?'selected':''; ?>>Cancelled</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-navy-600 hover:bg-navy-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition">Update Status</button>
+                    </form>
+                </div>
+                
+                <!-- Danger Zone -->
+                <div class="bg-white border border-red-100 rounded-2xl p-6 shadow-sm">
+                    <h3 class="text-base font-black text-red-600 mb-4 flex items-center gap-2"><i class="ri-error-warning-line"></i> Danger Zone</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed mb-4">Deleting this order will remove all customer details and invoice data permanently. This cannot be undone.</p>
+                    <button type="button" onclick="deleteSingle(<?php echo $id; ?>)" class="w-full border border-red-200 hover:bg-red-50 text-red-600 font-bold py-2 px-4 rounded-xl text-sm transition"><i class="ri-delete-bin-line"></i> Delete Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <form method="POST" id="singleDeleteForm" class="hidden">
+        <input type="hidden" name="form_action" value="delete_order">
+        <input type="hidden" name="id" id="singleDeleteId" value="">
+    </form>
+    
+    <script>
+    function deleteSingle(id) {
+        if(confirm('Are you sure you want to permanently delete this order?')) {
+            document.getElementById('singleDeleteId').value = id;
+            document.getElementById('singleDeleteForm').submit();
+        }
+    }
+    </script>
+    <?php
+    return;
+}
+
 
 $statusFilter = $_GET['status'] ?? '';
 $q = trim($_GET['q'] ?? '');

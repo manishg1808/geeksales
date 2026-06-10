@@ -149,7 +149,6 @@ $colorMap = [
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Category Name</label><input name="name" id="category_name" required value="<?php echo e($category['name']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600" placeholder="e.g. Photo Printers"></div>
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Slug</label><input name="slug" id="category_slug" value="<?php echo e($category['slug']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600" placeholder="auto-generated"></div>
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Description</label><textarea name="description" id="category_description" rows="2" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none" placeholder="auto-generated from category name"><?php echo e($category['description']); ?></textarea></div>
-        <div><label class="block text-sm font-semibold text-slate-700 mb-2">Icon</label><input name="icon" id="category_icon" value="<?php echo e($category['icon']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600" placeholder="auto-generated icon"></div>
         <div><label class="block text-sm font-semibold text-slate-700 mb-2">Category Image</label><input type="file" name="image_file" accept="image/*" class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-navy-600 bg-white"><input type="hidden" name="existing_image_url" value="<?php echo e($category['image_url'] ?? ''); ?>"><?php if(!empty($category['image_url'])): ?><div class="mt-2 text-xs text-slate-500">Current: <a href="../<?php echo e($category['image_url']); ?>" target="_blank" class="text-indigo-600 hover:underline"><?php echo e($category['image_url']); ?></a></div><?php endif; ?></div>
         <div class="grid grid-cols-2 gap-4">
             <div><label class="block text-sm font-semibold text-slate-700 mb-2">Color</label><select name="color" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white"><?php foreach(array_keys($colorMap) as $color): ?><option value="<?php echo e($color); ?>" <?php echo $category['color']===$color?'selected':''; ?>><?php echo e($color); ?></option><?php endforeach; ?></select></div>
@@ -164,23 +163,10 @@ $colorMap = [
     const nameInput = document.getElementById('category_name');
     const slugInput = document.getElementById('category_slug');
     const descInput = document.getElementById('category_description');
-    const iconInput = document.getElementById('category_icon');
     if (!nameInput) return;
 
     function slugifyClient(value) {
         return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-    }
-
-    function iconFor(value) {
-        const text = value.toLowerCase();
-        if (text.includes('ink') || text.includes('toner')) return 'ri-ink-bottle-line';
-        if (text.includes('laser')) return 'ri-fire-line';
-        if (text.includes('all') || text.includes('copy') || text.includes('scan')) return 'ri-file-copy-2-line';
-        if (text.includes('business') || text.includes('office')) return 'ri-building-2-line';
-        if (text.includes('photo')) return 'ri-camera-line';
-        if (text.includes('wireless') || text.includes('wifi')) return 'ri-wifi-line';
-        if (text.includes('deal') || text.includes('sale')) return 'ri-flashlight-line';
-        return 'ri-printer-line';
     }
 
     function descriptionFor(value) {
@@ -198,7 +184,6 @@ $colorMap = [
     nameInput.addEventListener('input', () => {
         slugInput.value = slugifyClient(nameInput.value);
         descInput.value = descriptionFor(nameInput.value);
-        iconInput.value = iconFor(nameInput.value);
     });
 })();
 </script>

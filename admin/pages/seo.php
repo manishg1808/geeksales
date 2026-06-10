@@ -19,6 +19,25 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         redirect_admin('seo');
     }
 
+    if ($postAction === 'save_analytics') {
+        $gaId = trim($_POST['google_analytics_id'] ?? '');
+        $gtmId = trim($_POST['google_tag_manager_id'] ?? '');
+        $gscId = trim($_POST['google_site_verification'] ?? '');
+        
+        $stmt = $pdo->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+        $stmt->execute(['google_analytics_id', $gaId]);
+        $stmt->execute(['google_tag_manager_id', $gtmId]);
+        $stmt->execute(['google_site_verification', $gscId]);
+        
+        // Refresh local settings array
+        $settings['google_analytics_id'] = $gaId;
+        $settings['google_tag_manager_id'] = $gtmId;
+        $settings['google_site_verification'] = $gscId;
+        
+        set_flash('Analytics & verification settings updated.');
+        redirect_admin('seo');
+    }
+
     if ($postAction === 'sync_seo_assets') {
         sync_seo_assets($pdo);
         set_flash('Sitemap, sitelinks and product schema synced from database.');
@@ -130,7 +149,7 @@ foreach ($pages as $row) {
         </div>
         <div class="bg-white rounded-2xl border border-slate-200 p-6">
             <h4 class="font-bold text-slate-700 text-sm mb-4 flex items-center gap-2"><i class="ri-google-line text-navy-600"></i> Search Preview</h4>
-            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200"><div class="text-xs text-slate-400 mb-2">geeksupportsales.com / <?php echo e($editItem['page_file']); ?></div><div class="text-lg text-navy-700 font-medium leading-tight mb-1"><?php echo e($editItem['meta_title']); ?></div><div class="text-sm text-slate-600 leading-relaxed"><?php echo e($editItem['meta_description']); ?></div></div>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200"><div class="text-xs text-slate-400 mb-2">geeksupportllc.com / <?php echo e($editItem['page_file']); ?></div><div class="text-lg text-navy-700 font-medium leading-tight mb-1"><?php echo e($editItem['meta_title']); ?></div><div class="text-sm text-slate-600 leading-relaxed"><?php echo e($editItem['meta_description']); ?></div></div>
         </div>
         <div class="flex gap-3 pb-4"><button class="bg-navy-600 hover:bg-navy-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 text-sm"><i class="ri-save-line"></i> Save SEO Settings</button><a href="?page=seo" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-6 py-3 rounded-xl text-sm">Cancel</a></div>
     </form>
@@ -191,22 +210,45 @@ foreach ($pages as $row) {
     </div>
 </div>
 
-<div class="bg-white rounded-2xl border border-slate-200 p-6">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
-        <div><h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="ri-code-box-line text-navy-600"></i> Schema Markup</h3><p class="text-xs text-slate-400 mt-1">Organization, website and product schema are stored in database.</p></div>
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+            <div><h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="ri-code-box-line text-navy-600"></i> Schema Markup</h3><p class="text-xs text-slate-400 mt-1">Organization, website and product schema are stored in database.</p></div>
+        </div>
+        <form method="POST" class="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-5">
+            <input type="hidden" name="form_action" value="save_schema">
+            <input name="name" required placeholder="Schema name" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-navy-600 col-span-2">
+            <select name="target_type" class="border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:border-navy-600"><option value="site">Site</option><option value="page">Page</option><option value="product">Product</option></select>
+            <input name="target_id" type="number" value="0" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-navy-600">
+            <button class="lg:col-span-4 bg-navy-600 hover:bg-navy-700 text-white font-bold rounded-xl px-4 py-2 text-sm">Add Schema</button>
+            <textarea name="schema_json" required rows="4" placeholder='{"@context":"https://schema.org","@type":"Organization"}' class="lg:col-span-4 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-navy-600 font-mono resize-none"></textarea>
+        </form>
+        <div class="grid grid-cols-1 gap-3 overflow-y-auto max-h-[300px] pr-1">
+            <?php foreach($schemas as $schema): ?>
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200"><div class="flex items-start justify-between gap-3 mb-2"><div><div class="font-bold text-slate-800 text-sm"><?php echo e($schema['name']); ?></div><div class="text-xs text-slate-400"><?php echo e($schema['target_type']); ?> #<?php echo (int)$schema['target_id']; ?></div></div><form method="POST" onsubmit="return confirm('Delete this schema?')"><input type="hidden" name="form_action" value="delete_schema"><input type="hidden" name="id" value="<?php echo (int)$schema['id']; ?>"><button class="text-red-500 hover:bg-red-50 rounded-lg w-8 h-8"><i class="ri-delete-bin-line"></i></button></form></div><pre class="text-[10px] text-slate-500 bg-white border border-slate-200 rounded-lg p-2 overflow-auto max-h-24"><?php echo e($schema['schema_json']); ?></pre></div>
+            <?php endforeach; ?>
+        </div>
     </div>
-    <form method="POST" class="grid grid-cols-1 lg:grid-cols-4 gap-3 mb-5">
-        <input type="hidden" name="form_action" value="save_schema">
-        <input name="name" required placeholder="Schema name" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-navy-600">
-        <select name="target_type" class="border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:border-navy-600"><option value="site">Site</option><option value="page">Page</option><option value="product">Product</option></select>
-        <input name="target_id" type="number" value="0" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-navy-600">
-        <button class="bg-navy-600 hover:bg-navy-700 text-white font-bold rounded-xl px-4 py-2 text-sm">Add Schema</button>
-        <textarea name="schema_json" required rows="4" placeholder='{"@context":"https://schema.org","@type":"Organization"}' class="lg:col-span-4 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-navy-600 font-mono resize-none"></textarea>
-    </form>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <?php foreach($schemas as $schema): ?>
-        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200"><div class="flex items-start justify-between gap-3 mb-2"><div><div class="font-bold text-slate-800 text-sm"><?php echo e($schema['name']); ?></div><div class="text-xs text-slate-400"><?php echo e($schema['target_type']); ?> #<?php echo (int)$schema['target_id']; ?></div></div><form method="POST" onsubmit="return confirm('Delete this schema?')"><input type="hidden" name="form_action" value="delete_schema"><input type="hidden" name="id" value="<?php echo (int)$schema['id']; ?>"><button class="text-red-500 hover:bg-red-50 rounded-lg w-8 h-8"><i class="ri-delete-bin-line"></i></button></form></div><pre class="text-[10px] text-slate-500 bg-white border border-slate-200 rounded-lg p-2 overflow-auto max-h-24"><?php echo e($schema['schema_json']); ?></pre></div>
-        <?php endforeach; ?>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2"><i class="ri-google-line text-navy-600"></i> Search Console & Analytics</h3>
+        <p class="text-xs text-slate-400 mb-4">Integrate tracking and verification tags dynamically across your storefront.</p>
+        <form method="POST" class="space-y-4">
+            <input type="hidden" name="form_action" value="save_analytics">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Google Analytics ID (GA4)</label>
+                <input name="google_analytics_id" value="<?php echo e($settings['google_analytics_id'] ?? ''); ?>" placeholder="e.g. G-9Y0SCZN83K" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 transition">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Google Tag Manager ID (GTM)</label>
+                <input name="google_tag_manager_id" value="<?php echo e($settings['google_tag_manager_id'] ?? ''); ?>" placeholder="e.g. GTM-XXXXXX" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 transition">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Google Search Console Verification ID</label>
+                <input name="google_site_verification" value="<?php echo e($settings['google_site_verification'] ?? ''); ?>" placeholder="e.g. site-verification-token" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 transition">
+            </div>
+            <button class="w-full bg-navy-600 hover:bg-navy-700 text-white font-bold rounded-xl px-4 py-3 text-sm transition shadow-sm mt-2"><i class="ri-save-line mr-1"></i> Save Integration Tags</button>
+        </form>
     </div>
 </div>
 <?php endif; ?>

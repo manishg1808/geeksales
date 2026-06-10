@@ -108,6 +108,7 @@ function schema_is_ready(PDO $pdo): bool
     $requiredColumns = [
         'categories' => ['image_url'],
         'banners' => ['secondary_button_text', 'secondary_link_url', 'image_url', 'poster_style'],
+        'orders' => ['payment_method'],
     ];
     try {
         foreach ($requiredColumns as $table => $columns) {
@@ -174,9 +175,58 @@ function render_pagination(int $total, array $state, string $param = 'p'): void
     echo '</div></div>';
 }
 
+function generate_physical_sitemap(PDO $pdo, string $siteUrl): void
+{
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    
+    try {
+        $stmt = $pdo->query('SELECT url, priority, changefreq FROM sitemap_entries WHERE active = 1 ORDER BY priority DESC');
+        if ($stmt) {
+            foreach ($stmt as $row) {
+                $xml .= "  <url>\n";
+                $xml .= "    <loc>" . htmlspecialchars($row['url'], ENT_XML1, 'UTF-8') . "</loc>\n";
+                $xml .= "    <changefreq>" . htmlspecialchars($row['changefreq'], ENT_XML1, 'UTF-8') . "</changefreq>\n";
+                $xml .= "    <priority>" . htmlspecialchars($row['priority'], ENT_XML1, 'UTF-8') . "</priority>\n";
+                $xml .= "  </url>\n";
+            }
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
+    $xml .= '</urlset>';
+    
+    @file_put_contents(dirname(__DIR__, 2) . '/sitemap.xml', $xml);
+}
+
 function sync_seo_assets(PDO $pdo): void
 {
-    $siteUrl = rtrim((string)($pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'store_url'")->fetchColumn() ?: 'https://geeksupportsales.com'), '/');
+    $siteUrl = rtrim((string)($pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'store_url'")->fetchColumn() ?: 'https://geeksupportllc.com'), '/');
+
+    // Cleanup old sitemap entries with different store URLs
+    try {
+        $pdo->prepare("DELETE FROM sitemap_entries WHERE url NOT LIKE ?")->execute([$siteUrl . '%']);
+    } catch (Throwable $e) {
+        // ignore
+    }
+
+    // Ensure all default pages exist in seo_meta
+    $defaultSeoPages = [
+        ['Homepage', 'index.php', 'geeksupportllc - Printer Sales & Setup Support', 'Shop printers, ink, and toner with expert setup support.', 'printer sales, printer setup, ink, toner'],
+        ['Products', 'products.php', 'Shop Printers, Ink & Toner', 'Browse top printer models and supplies for home and business.', 'printers, inkjet, laser, toner'],
+        ['Support', 'support.php', 'Printer Setup Support', 'Get expert help with wireless printer setup, drivers, and offline issues.', 'printer support, setup help'],
+        ['Contact Us', 'contact.php', 'Contact Geek Support LLc - 24/7 Printer Support', 'Get in touch with Geek Support LLc for printer sales, installation, and troubleshooting support.', 'contact printer support, printer setup phone number'],
+        ['Privacy Policy', 'policy.php', 'Privacy Policy - Geek Support LLc', 'Read the privacy policy of Geek Support LLc regarding customer information and data protection.', 'privacy policy, terms of service'],
+        ['Checkout', 'checkout.php', 'Secure Checkout - Geek Support LLc', 'Complete your purchase securely. Free shipping and 2-year warranty included on printers.', 'checkout, buy printer, secure payment']
+    ];
+    $checkSeo = $pdo->prepare('SELECT COUNT(*) FROM seo_meta WHERE page_file = ?');
+    $insertSeo = $pdo->prepare('INSERT INTO seo_meta (page_name, page_file, meta_title, meta_description, keywords) VALUES (?, ?, ?, ?, ?)');
+    foreach ($defaultSeoPages as $row) {
+        $checkSeo->execute([$row[1]]);
+        if ((int)$checkSeo->fetchColumn() === 0) {
+            $insertSeo->execute($row);
+        }
+    }
 
     $pageStmt = $pdo->query('SELECT page_name, page_file FROM seo_meta ORDER BY id');
     $upsertSitemap = $pdo->prepare('INSERT INTO sitemap_entries (label, url, source_type, source_id, priority, changefreq, active) VALUES (?, ?, ?, ?, ?, ?, 1) ON DUPLICATE KEY UPDATE label=VALUES(label), priority=VALUES(priority), changefreq=VALUES(changefreq), active=1');
@@ -205,9 +255,9 @@ function sync_seo_assets(PDO $pdo): void
 
     if (table_count($pdo, 'schema_markup') === 0) {
         $schemas = [
-            ['Organization', 'site', 0, '{"@context":"https://schema.org","@type":"Organization","name":"GeekSupportSales","url":"' . $siteUrl . '"}', 1],
-            ['WebSite', 'site', 0, '{"@context":"https://schema.org","@type":"WebSite","name":"GeekSupportSales","url":"' . $siteUrl . '"}', 1],
-            ['LocalBusiness', 'site', 0, '{"@context":"https://schema.org","@type":"LocalBusiness","name":"GeekSupportSales","telephone":"8019511533"}', 1],
+            ['Organization', 'site', 0, '{"@context":"https://schema.org","@type":"Organization","name":"geeksupportllc","url":"' . $siteUrl . '"}', 1],
+            ['WebSite', 'site', 0, '{"@context":"https://schema.org","@type":"WebSite","name":"geeksupportllc","url":"' . $siteUrl . '"}', 1],
+            ['LocalBusiness', 'site', 0, '{"@context":"https://schema.org","@type":"LocalBusiness","name":"geeksupportllc","telephone":"407-246-9887"}', 1],
         ];
         $stmt = $pdo->prepare('INSERT INTO schema_markup (name, target_type, target_id, schema_json, active) VALUES (?, ?, ?, ?, ?)');
         foreach ($schemas as $schema) {
@@ -234,6 +284,8 @@ function sync_seo_assets(PDO $pdo): void
         ];
         $productSchemaStmt->execute([$product['name'] . ' Product Schema', 'product', (int)$product['id'], json_encode($schema, JSON_UNESCAPED_SLASHES)]);
     }
+
+    generate_physical_sitemap($pdo, $siteUrl);
 }
 
 function ensure_schema(PDO $pdo): void
@@ -318,6 +370,7 @@ function ensure_schema(PDO $pdo): void
             phone VARCHAR(40) DEFAULT '',
             product_name VARCHAR(220) NOT NULL,
             amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+            payment_method VARCHAR(50) DEFAULT 'manual',
             order_date DATE NOT NULL,
             status ENUM('pending','shipped','delivered','cancelled') NOT NULL DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -421,38 +474,6 @@ function ensure_schema(PDO $pdo): void
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-        "CREATE TABLE IF NOT EXISTS coupons (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            code VARCHAR(60) NOT NULL UNIQUE,
-            description VARCHAR(255) DEFAULT '',
-            discount_type ENUM('percentage','fixed') NOT NULL DEFAULT 'percentage',
-            discount_value DECIMAL(10,2) NOT NULL DEFAULT 0,
-            min_order_amount DECIMAL(10,2) DEFAULT 0,
-            max_discount DECIMAL(10,2) DEFAULT NULL,
-            usage_limit INT DEFAULT NULL,
-            used_count INT NOT NULL DEFAULT 0,
-            start_date DATE DEFAULT NULL,
-            end_date DATE DEFAULT NULL,
-            active TINYINT(1) NOT NULL DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-        "CREATE TABLE IF NOT EXISTS reviews (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            product_id INT DEFAULT NULL,
-            product_name VARCHAR(220) DEFAULT '',
-            customer_name VARCHAR(160) NOT NULL,
-            customer_email VARCHAR(160) DEFAULT '',
-            rating TINYINT NOT NULL DEFAULT 5,
-            title VARCHAR(255) DEFAULT '',
-            body TEXT,
-            status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
-            admin_reply TEXT DEFAULT NULL,
-            helpful_votes INT DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            CONSTRAINT fk_review_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
     ];
 
     foreach ($schema as $sql) {
@@ -502,6 +523,9 @@ function ensure_schema(PDO $pdo): void
                 'image_url' => "VARCHAR(255) DEFAULT '' AFTER secondary_link_url",
                 'poster_style' => "VARCHAR(40) DEFAULT 'standard' AFTER image_url",
             ],
+            'orders' => [
+                'payment_method' => "VARCHAR(50) DEFAULT 'manual' AFTER amount",
+            ],
         ];
 
         foreach ($tableColumns as $table => $columns) {
@@ -531,17 +555,17 @@ function seed_database(PDO $pdo): void
 {
     if (table_count($pdo, 'admin_users') === 0) {
         $stmt = $pdo->prepare('INSERT INTO admin_users (username, password_hash, email, role) VALUES (?, ?, ?, ?)');
-        $stmt->execute(['admin', password_hash('admin123', PASSWORD_DEFAULT), 'admin@geeksupportsales.com', 'Super Admin']);
+        $stmt->execute(['support@geeksupportllc.com', password_hash('407-246-9887!@#', PASSWORD_DEFAULT), 'support@geeksupportllc.com', 'Super Admin']);
     }
 
     if (table_count($pdo, 'brands') === 0) {
         $brands = [
-            ['HP', 'hp', 'USA', 'https://www.hp.com', 'navy', 1],
-            ['Canon', 'canon', 'Japan', 'https://www.canon.com', 'red', 1],
-            ['Brother', 'brother', 'Japan', 'https://www.brother.com', 'amber', 1],
-            ['Epson', 'epson', 'Japan', 'https://www.epson.com', 'emerald', 1],
-            ['Xerox', 'xerox', 'USA', 'https://www.xerox.com', 'slate', 0],
-            ['Lexmark', 'lexmark', 'USA', 'https://www.lexmark.com', 'purple', 1],
+            ['HP', 'hp', 'USA', '', 'navy', 1],
+            ['Canon', 'canon', 'Japan', '', 'red', 1],
+            ['Brother', 'brother', 'Japan', '', 'amber', 1],
+            ['Epson', 'epson', 'Japan', '', 'emerald', 1],
+            ['Xerox', 'xerox', 'USA', '', 'slate', 0],
+            ['Lexmark', 'lexmark', 'USA', '', 'purple', 1],
         ];
         $stmt = $pdo->prepare('INSERT INTO brands (name, slug, origin, website, color, active) VALUES (?, ?, ?, ?, ?, ?)');
         foreach ($brands as $brand) {
@@ -602,11 +626,11 @@ function seed_database(PDO $pdo): void
 
     if (table_count($pdo, 'orders') === 0) {
         $orders = [
-            ['ORD-1045', 'John Smith', 'john@email.com', '8019511533', 'HP DeskJet 4155e', 89.99, '2026-06-03', 'delivered'],
-            ['ORD-1044', 'Sarah Lee', 'sarah@email.com', '8019511533', 'Canon PIXMA TR8620', 149.99, '2026-06-03', 'pending'],
-            ['ORD-1043', 'Mike Johnson', 'mike@email.com', '8019511533', 'Brother HL-L2350DW', 109.99, '2026-06-02', 'shipped'],
-            ['ORD-1042', 'Emily Davis', 'emily@email.com', '8019511533', 'Epson EcoTank ET-2800', 174.99, '2026-06-02', 'cancelled'],
-            ['ORD-1041', 'Tom Wilson', 'tom@email.com', '8019511533', 'HP LaserJet Pro M404n', 249.00, '2026-06-01', 'delivered'],
+            ['ORD-1045', 'John Smith', 'john@email.com', '407-246-9887', 'HP DeskJet 4155e', 89.99, '2026-06-03', 'delivered'],
+            ['ORD-1044', 'Sarah Lee', 'sarah@email.com', '407-246-9887', 'Canon PIXMA TR8620', 149.99, '2026-06-03', 'pending'],
+            ['ORD-1043', 'Mike Johnson', 'mike@email.com', '407-246-9887', 'Brother HL-L2350DW', 109.99, '2026-06-02', 'shipped'],
+            ['ORD-1042', 'Emily Davis', 'emily@email.com', '407-246-9887', 'Epson EcoTank ET-2800', 174.99, '2026-06-02', 'cancelled'],
+            ['ORD-1041', 'Tom Wilson', 'tom@email.com', '407-246-9887', 'HP LaserJet Pro M404n', 249.00, '2026-06-01', 'delivered'],
         ];
         $stmt = $pdo->prepare('INSERT INTO orders (order_no, customer_name, email, phone, product_name, amount, order_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         foreach ($orders as $order) {
@@ -616,10 +640,10 @@ function seed_database(PDO $pdo): void
 
     if (table_count($pdo, 'leads') === 0) {
         $leads = [
-            ['Alice Brown', 'alice@email.com', '8019511533', 'Interested in HP DeskJet 4155e', 'I would like to know more about setup support included.', 'new', '2026-06-04 10:00:00'],
-            ['Robert Clark', 'rob@email.com', '8019511533', 'Bulk order inquiry', 'We need 20 printers for our office. Please send pricing.', 'contacted', '2026-06-03 09:00:00'],
-            ['Mary White', 'mary@email.com', '8019511533', 'Ink subscription', 'Do you offer a monthly ink subscription plan?', 'follow_up', '2026-06-03 12:00:00'],
-            ['David Green', 'david@email.com', '8019511533', 'Warranty question', 'What does the 2-year warranty cover exactly?', 'closed', '2026-06-02 11:00:00'],
+            ['Alice Brown', 'alice@email.com', '407-246-9887', 'Interested in HP DeskJet 4155e', 'I would like to know more about setup support included.', 'new', '2026-06-04 10:00:00'],
+            ['Robert Clark', 'rob@email.com', '407-246-9887', 'Bulk order inquiry', 'We need 20 printers for our office. Please send pricing.', 'contacted', '2026-06-03 09:00:00'],
+            ['Mary White', 'mary@email.com', '407-246-9887', 'Ink subscription', 'Do you offer a monthly ink subscription plan?', 'follow_up', '2026-06-03 12:00:00'],
+            ['David Green', 'david@email.com', '407-246-9887', 'Warranty question', 'What does the 2-year warranty cover exactly?', 'closed', '2026-06-02 11:00:00'],
         ];
         $stmt = $pdo->prepare('INSERT INTO leads (name, email, phone, subject, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
         foreach ($leads as $lead) {
@@ -629,21 +653,18 @@ function seed_database(PDO $pdo): void
 
     if (table_count($pdo, 'banners') === 0) {
         $banners = [
-            ['Summer Sale Hero', 'Save on printers with free setup support.', '40% OFF', 'Shop Now', '/products.php?cat=deals', 'Homepage Hero', 'navy', 'active', '2026-06-01', '2026-06-30', 1],
-            ['Ink & Toner Promo', 'Original and compatible supplies for major brands.', 'FREE SHIP', 'Shop Ink', '/products.php?cat=ink-toner', 'Homepage Section', 'emerald', 'active', '2026-06-01', '2026-06-15', 2],
-            ['Business Printers', 'Reliable printing solutions for offices and teams.', 'NEW', 'View Business', '/products.php?cat=business', 'Products Page Top', 'amber', 'inactive', '2026-07-01', '2026-07-31', 3],
+            ['Home Banner 1', 'IMAGE/1.jpg', 1],
+            ['Home Banner 2', 'IMAGE/8.png', 2],
+            ['Home Banner 3', 'IMAGE/2.jpg', 3],
+            ['Home Banner 4', 'IMAGE/6.png', 4],
         ];
-        $stmt = $pdo->prepare('INSERT INTO banners (title, subtitle, badge, button_text, link_url, location, bg_theme, status, start_date, end_date, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare("INSERT INTO banners (title, subtitle, badge, button_text, link_url, secondary_button_text, secondary_link_url, image_url, poster_style, location, bg_theme, status, start_date, end_date, sort_order) VALUES (?, '', '', '', '', '', '', ?, 'standard', 'Homepage Hero', 'navy', 'active', NULL, NULL, ?)");
         foreach ($banners as $banner) {
             $stmt->execute($banner);
         }
     }
 
-    $posterBanners = [
-        ['Smart Printing Better Every Day', 'Reliable printers for home, office and business - built for performance.', '', 'Shop Printers', 'products.php', 'View Deals', 'products.php?cat=deals', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=900&q=80', 'poster_light', 'Homepage Hero', 'navy', 'active', 4],
-        ['Professional Results. Every Page.', 'High-performance printers for business, home and everything in between.', '', 'Shop Printers', 'products.php?cat=business', 'View Deals', 'products.php?cat=deals', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=900&q=80', 'poster_dark', 'Homepage Hero', 'navy', 'active', 5],
-        ['Print Smarter. Save More.', 'Smart solutions for efficient printing at home or work.', '', 'Shop Printers', 'products.php', 'View Deals', 'products.php?cat=deals', 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=900&q=80', 'poster_teal', 'Homepage Hero', 'emerald', 'inactive', 6],
-    ];
+    $posterBanners = [];
     $existsStmt = $pdo->prepare('SELECT COUNT(*) FROM banners WHERE title = ? AND location = ?');
     $insertPoster = $pdo->prepare('INSERT INTO banners (title, subtitle, badge, button_text, link_url, secondary_button_text, secondary_link_url, image_url, poster_style, location, bg_theme, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     foreach ($posterBanners as $banner) {
@@ -655,7 +676,7 @@ function seed_database(PDO $pdo): void
 
     if (table_count($pdo, 'seo_meta') === 0) {
         $seo = [
-            ['Homepage', 'index.php', 'GeekSupportSales - Printer Sales & Setup Support', 'Shop printers, ink, and toner with expert setup support.', 'printer sales, printer setup, ink, toner'],
+            ['Homepage', 'index.php', 'geeksupportllc - Printer Sales & Setup Support', 'Shop printers, ink, and toner with expert setup support.', 'printer sales, printer setup, ink, toner'],
             ['Products', 'products.php', 'Shop Printers, Ink & Toner', 'Browse top printer models and supplies for home and business.', 'printers, inkjet, laser, toner'],
             ['Support', 'support.php', 'Printer Setup Support', 'Get expert help with wireless printer setup, drivers, and offline issues.', 'printer support, setup help'],
         ];
@@ -679,19 +700,37 @@ function seed_database(PDO $pdo): void
 
     if (table_count($pdo, 'settings') === 0) {
         $settings = [
-            'store_name' => 'GeekSupportSales',
+            'store_name' => 'geeksupportllc',
             'tagline' => 'Your Printer Experts',
-            'store_email' => 'support@geeksupportsales.com',
-            'phone' => '8019511533',
-            'store_url' => 'https://geeksupportsales.com',
-            'store_address' => '123 Tech Boulevard, Silicon Valley, CA 94025',
+            'store_email' => 'support@geeksupportllc.com',
+            'phone' => '407-246-9887',
+            'store_url' => 'https://geeksupportllc.com',
+            'store_address' => '4307 Vineland Road, Suite H-12 Orlando, FL 3281',
             'currency' => 'USD ($)',
             'timezone' => 'Asia/Kolkata',
             'announcement_text' => 'Free Shipping on orders over $99 | Free Expert Setup | 24/7 Tech Support',
+            'google_analytics_id' => 'G-9Y0SCZN83K',
+            'google_tag_manager_id' => '',
+            'google_site_verification' => '',
         ];
         $stmt = $pdo->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)');
         foreach ($settings as $key => $value) {
             $stmt->execute([$key, $value]);
+        }
+    } else {
+        // Ensure new settings keys exist
+        $ensureSettings = [
+            'google_analytics_id' => 'G-9Y0SCZN83K',
+            'google_tag_manager_id' => '',
+            'google_site_verification' => '',
+        ];
+        $checkStmt = $pdo->prepare('SELECT COUNT(*) FROM settings WHERE setting_key = ?');
+        $insertStmt = $pdo->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)');
+        foreach ($ensureSettings as $key => $value) {
+            $checkStmt->execute([$key]);
+            if ((int)$checkStmt->fetchColumn() === 0) {
+                $insertStmt->execute([$key, $value]);
+            }
         }
     }
 
@@ -710,3 +749,140 @@ function lookup_ids(PDO $pdo): array
     }
     return ['brands' => $brands, 'categories' => $categories];
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GLOBAL SETTINGS & DYNAMIC SEO/ANALYTICS HELPERS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+function get_settings(PDO $pdo): array
+{
+    $settings = [
+        'store_name' => 'geeksupportllc',
+        'tagline' => 'Your Printer Experts',
+        'store_email' => 'support@geeksupportllc.com',
+        'phone' => '407-246-9887',
+        'store_url' => 'https://geeksupportllc.com',
+        'store_address' => '4307 Vineland Road, Suite H-12 Orlando, FL 3281',
+        'currency' => 'USD ($)',
+        'timezone' => 'Asia/Kolkata',
+        'announcement_text' => 'Free Shipping on orders over $99 | Free Expert Setup | 24/7 Tech Support',
+        'google_analytics_id' => 'G-9Y0SCZN83K',
+        'google_tag_manager_id' => '',
+        'google_site_verification' => '',
+    ];
+
+    try {
+        $stmt = $pdo->query('SELECT setting_key, setting_value FROM settings');
+        if ($stmt) {
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $settings[$row['setting_key']] = (string)$row['setting_value'];
+            }
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
+    return $settings;
+}
+
+function get_page_seo(string $pageFile = ''): array
+{
+    global $settings;
+    if ($pageFile === '') {
+        $pageFile = basename($_SERVER['PHP_SELF']);
+    }
+    
+    $title = $settings['default_meta_title'] ?? 'geeksupportllc - Printer Sales & Setup Support in Orlando';
+    $description = $settings['default_meta_description'] ?? 'Shop printers, ink, and toner with expert setup support.';
+    $keywords = $settings['default_meta_keywords'] ?? 'printer sales, printer setup, ink, toner';
+
+    try {
+        $pdo = db();
+        $stmt = $pdo->prepare('SELECT meta_title, meta_description, keywords FROM seo_meta WHERE page_file = ?');
+        $stmt->execute([$pageFile]);
+        $row = $stmt->fetch();
+        if ($row) {
+            if (!empty($row['meta_title'])) {
+                $title = $row['meta_title'];
+            }
+            if (!empty($row['meta_description'])) {
+                $description = $row['meta_description'];
+            }
+            if (!empty($row['keywords'])) {
+                $keywords = $row['keywords'];
+            }
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
+
+    return [
+        'title' => $title,
+        'description' => $description,
+        'keywords' => $keywords
+    ];
+}
+
+function render_google_analytics(): void
+{
+    global $settings;
+    $gaId = $settings['google_analytics_id'] ?? '';
+    if ($gaId !== '' && $gaId !== 'disabled') {
+        $gaId = htmlspecialchars($gaId, ENT_QUOTES, 'UTF-8');
+        echo "\n<!-- Google tag (gtag.js) -->\n";
+        echo "<script async src=\"https://www.googletagmanager.com/gtag/js?id={$gaId}\"></script>\n";
+        echo "<script>\n";
+        echo "  window.dataLayer = window.dataLayer || [];\n";
+        echo "  function gtag(){dataLayer.push(arguments);}\n";
+        echo "  gtag('js', new Date());\n";
+        echo "  gtag('config', '{$gaId}');\n";
+        echo "</script>\n";
+    }
+}
+
+function render_google_tag_manager_head(): void
+{
+    global $settings;
+    $gtmId = $settings['google_tag_manager_id'] ?? '';
+    if ($gtmId !== '' && $gtmId !== 'disabled') {
+        $gtmId = htmlspecialchars($gtmId, ENT_QUOTES, 'UTF-8');
+        echo "\n<!-- Google Tag Manager -->\n";
+        echo "<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\n";
+        echo "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],\n";
+        echo "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=\n";
+        echo "'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\n";
+        echo "})(window,document,'script','dataLayer','{$gtmId}');</script>\n";
+        echo "<!-- End Google Tag Manager -->\n";
+    }
+}
+
+function render_google_tag_manager_body(): void
+{
+    global $settings;
+    $gtmId = $settings['google_tag_manager_id'] ?? '';
+    if ($gtmId !== '' && $gtmId !== 'disabled') {
+        $gtmId = htmlspecialchars($gtmId, ENT_QUOTES, 'UTF-8');
+        echo "\n<!-- Google Tag Manager (noscript) -->\n";
+        echo "<noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id={$gtmId}\"\n";
+        echo "height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>\n";
+        echo "<!-- End Google Tag Manager (noscript) -->\n";
+    }
+}
+
+function render_google_site_verification(): void
+{
+    global $settings;
+    $verification = $settings['google_site_verification'] ?? '';
+    if ($verification !== '' && $verification !== 'disabled') {
+        $verification = htmlspecialchars($verification, ENT_QUOTES, 'UTF-8');
+        echo "\n<meta name=\"google-site-verification\" content=\"{$verification}\" />\n";
+    }
+}
+
+// Load settings globally
+$settings = [];
+try {
+    $settings = get_settings(db());
+} catch (Throwable $e) {
+    // ignore
+}
+

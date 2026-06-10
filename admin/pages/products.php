@@ -20,6 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $metaKeys = trim($_POST['meta_keywords'] ?? '');
         $topPick = isset($_POST['top_pick']) ? 1 : 0;
         $featured = isset($_POST['featured']) ? 1 : 0;
+        $isRelated = isset($_POST['is_related']) ? 1 : 0;
         
         // Handle file upload
         $imageUrl = $_POST['existing_image_url'] ?? '';
@@ -56,17 +57,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $_POST['status'] === 'inactive' ? 'inactive' : 'active',
             $imageUrl,
             $topPick,
-            $featured
+            $featured,
+            $isRelated
         ];
 
         if ($name === '') {
             set_flash('Product name is required.', 'error');
         } elseif ($productId > 0) {
-            $sql = 'UPDATE products SET name=?, slug=?, model=?, brand_id=?, category_id=?, price=?, old_price=?, badge=?, rating=?, stock=?, description=?, short_description=?, specifications=?, meta_title=?, meta_description=?, meta_keywords=?, status=?, image_url=?, top_pick=?, featured=? WHERE id=?';
+            $sql = 'UPDATE products SET name=?, slug=?, model=?, brand_id=?, category_id=?, price=?, old_price=?, badge=?, rating=?, stock=?, description=?, short_description=?, specifications=?, meta_title=?, meta_description=?, meta_keywords=?, status=?, image_url=?, top_pick=?, featured=?, is_related=? WHERE id=?';
             $pdo->prepare($sql)->execute([...$data, $productId]);
             set_flash('Product updated successfully.');
         } else {
-            $sql = 'INSERT INTO products (name, slug, model, brand_id, category_id, price, old_price, badge, rating, stock, description, short_description, specifications, meta_title, meta_description, meta_keywords, status, image_url, top_pick, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            $sql = 'INSERT INTO products (name, slug, model, brand_id, category_id, price, old_price, badge, rating, stock, description, short_description, specifications, meta_title, meta_description, meta_keywords, status, image_url, top_pick, featured, is_related) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
             $pdo->prepare($sql)->execute($data);
             set_flash('Product added successfully.');
         }
@@ -100,7 +102,7 @@ $product = [
     'price' => '', 'old_price' => '', 'badge' => '', 'rating' => '5.0', 'stock' => '',
     'description' => '', 'short_description' => '', 'specifications' => '',
     'meta_title' => '', 'meta_description' => '', 'meta_keywords' => '',
-    'status' => 'active', 'image_url' => '', 'top_pick' => 0, 'featured' => 0,
+    'status' => 'active', 'image_url' => '', 'top_pick' => 0, 'featured' => 0, 'is_related' => 0,
 ];
 if ($action === 'edit' && $id > 0) {
     $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
@@ -243,30 +245,33 @@ $products = $stmt->fetchAll();
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Short Description</label>
                     <textarea name="short_description" rows="2" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none" placeholder="Brief summary of the product..."><?php echo e($product['short_description']); ?></textarea>
                 </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-                    <textarea name="description" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none" placeholder="Detailed product description..."><?php echo e($product['description']); ?></textarea>
-                </div>
+
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Specifications</label>
-                    <textarea name="specifications" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none" placeholder="Enter key specs, e.g. Print Speed: 22 ppm color, Resolution: 4800x1200 dpi..."><?php echo e($product['specifications']); ?></textarea>
+                    <textarea name="specifications" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none" placeholder="Enter key specs, e.g. Resolution: 4800x1200 dpi, Connectivity: Wi-Fi, USB..."><?php echo e($product['specifications']); ?></textarea>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Status</label>
-                    <select name="status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-navy-600">
-                        <option value="active" <?php echo $product['status']==='active'?'selected':''; ?>>Active</option>
-                        <option value="inactive" <?php echo $product['status']==='inactive'?'selected':''; ?>>Inactive</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2 flex flex-wrap gap-6 py-2">
-                    <label class="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700 font-semibold select-none">
-                        <input type="checkbox" name="top_pick" value="1" <?php echo $product['top_pick'] ? 'checked' : ''; ?> class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                        Top Pick
-                    </label>
-                    <label class="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700 font-semibold select-none">
-                        <input type="checkbox" name="featured" value="1" <?php echo $product['featured'] ? 'checked' : ''; ?> class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                        Featured Product
-                    </label>
+                <div class="md:col-span-2 flex flex-col md:flex-row md:items-end gap-6">
+                    <div class="w-full md:w-1/2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Status</label>
+                        <select name="status" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm bg-white outline-none focus:border-navy-600">
+                            <option value="active" <?php echo $product['status']==='active'?'selected':''; ?>>Active</option>
+                            <option value="inactive" <?php echo $product['status']==='inactive'?'selected':''; ?>>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-wrap gap-5 pb-3">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700 font-semibold select-none">
+                            <input type="checkbox" name="top_pick" value="1" <?php echo $product['top_pick'] ? 'checked' : ''; ?> class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                            Top Pick
+                        </label>
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700 font-semibold select-none">
+                            <input type="checkbox" name="featured" value="1" <?php echo $product['featured'] ? 'checked' : ''; ?> class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                            Featured Product
+                        </label>
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm text-slate-700 font-semibold select-none bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                            <input type="checkbox" name="is_related" value="1" <?php echo ($product['is_related'] ?? 0) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-indigo-600 border-indigo-300 focus:ring-indigo-500">
+                            <span class="text-indigo-800">Related Product</span>
+                        </label>
+                    </div>
                 </div>
             </div>
             
@@ -356,7 +361,7 @@ document.getElementById('product_name')?.addEventListener('input', function() {
     <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-md transition relative group">
         <input type="checkbox" name="selected_ids[]" value="<?php echo (int)$p['id']; ?>" class="item-checkbox absolute top-4 right-4 w-4 h-4 rounded text-indigo-600 border-slate-300 z-10">
         <div class="flex items-start gap-3 mb-4">
-            <div class="bg-navy-50 rounded-xl w-12 h-12 flex items-center justify-center shrink-0"><i class="<?php echo e($p['image_icon'] ?? 'ri-printer-line'); ?> text-navy-600 text-xl"></i></div>
+            <?php if(!empty($p['image_url'])): ?><img src="../<?php echo e($p['image_url']); ?>" class="rounded-xl w-12 h-12 object-cover shrink-0"><?php else: ?><div class="bg-navy-50 rounded-xl w-12 h-12 flex items-center justify-center shrink-0"><i class="<?php echo e($p['image_icon'] ?? 'ri-printer-line'); ?> text-navy-600 text-xl"></i></div><?php endif; ?>
             <div class="pr-6">
                 <h4 class="font-bold text-slate-800 text-sm line-clamp-1" title="<?php echo e($p['name']); ?>"><?php echo e($p['name']); ?></h4>
                 <div class="text-xs text-slate-400 mt-1"><?php echo e($p['brand'] ?? '-'); ?> &bull; <?php echo e($p['category'] ?? '-'); ?></div>
@@ -402,7 +407,7 @@ document.getElementById('selectAllGrid')?.addEventListener('change', function() 
                     <td class="px-5 py-3.5 text-slate-400 font-medium"><?php echo (int)$p['id']; ?></td>
                     <td class="px-5 py-3.5">
                         <div class="flex items-center gap-3">
-                            <div class="bg-navy-50 rounded-xl w-10 h-10 flex items-center justify-center shrink-0"><i class="<?php echo e($p['image_icon']); ?> text-navy-600 text-lg"></i></div>
+                            <?php if(!empty($p['image_url'])): ?><img src="../<?php echo e($p['image_url']); ?>" class="rounded-xl w-10 h-10 object-cover shrink-0"><?php else: ?><div class="bg-navy-50 rounded-xl w-10 h-10 flex items-center justify-center shrink-0"><i class="<?php echo e($p['image_icon'] ?? 'ri-printer-fill'); ?> text-navy-600 text-lg"></i></div><?php endif; ?>
                             <div>
                                 <div class="font-bold text-slate-800"><?php echo e($p['name']); ?></div>
                                 <?php if($p['badge']): ?><span class="text-[10px] font-bold bg-amber2-100 text-amber2-700 px-1.5 py-0.5 rounded-md"><?php echo e($p['badge']); ?></span><?php endif; ?>
@@ -554,13 +559,10 @@ function deleteSingle(id) {
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Short Description</label>
                         <textarea name="short_description" rows="2" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 bg-white resize-none" placeholder="Brief summary of the product..."></textarea>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Description</label>
-                        <textarea name="description" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 bg-white resize-none" placeholder="Detailed product description..."></textarea>
-                    </div>
+
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Specifications</label>
-                        <textarea name="specifications" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 bg-white resize-none" placeholder="Print Speed: 22ppm, Resolution: 4800x1200 dpi..."></textarea>
+                        <textarea name="specifications" rows="3" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 bg-white resize-none" placeholder="Resolution: 4800x1200 dpi, Connectivity: Wi-Fi, USB..."></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Status</label>
@@ -569,14 +571,18 @@ function deleteSingle(id) {
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-                    <div class="flex items-center gap-6 pt-2">
-                        <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
-                            <input type="checkbox" name="top_pick" value="1" class="w-4 h-4 rounded text-indigo-600">
+                    <div class="flex flex-wrap items-center gap-4 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 select-none">
+                            <input type="checkbox" name="top_pick" value="1" class="w-4 h-4 rounded text-indigo-600 border-slate-300">
                             Top Pick
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
-                            <input type="checkbox" name="featured" value="1" class="w-4 h-4 rounded text-indigo-600">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700 select-none">
+                            <input type="checkbox" name="featured" value="1" class="w-4 h-4 rounded text-indigo-600 border-slate-300">
                             Featured Product
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold select-none bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                            <input type="checkbox" name="is_related" value="1" class="w-4 h-4 rounded text-indigo-600 border-indigo-300">
+                            <span class="text-indigo-800">Related Product</span>
                         </label>
                     </div>
                 </div>

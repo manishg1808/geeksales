@@ -14,6 +14,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         redirect_admin('customers');
     }
 
+    if ($postAction === 'bulk_delete_customers') {
+        $ids = array_values(array_filter(array_map('intval', $_POST['customer_ids'] ?? [])));
+        if ($ids) {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $pdo->prepare("DELETE FROM customers WHERE id IN ($placeholders)")->execute($ids);
+            set_flash(count($ids) . ' customer(s) deleted.');
+        } else {
+            set_flash('Select at least one customer to delete.');
+        }
+        $_SESSION['customers_synced_at'] = time();
+        redirect_admin('customers');
+    }
+
     if ($postAction === 'save_customer_note') {
         $pdo->prepare("UPDATE customers SET notes=?, phone=?, address=?, city=?, state=? WHERE id=?")
             ->execute([
@@ -235,6 +248,12 @@ if ($viewId > 0) {
         <h2 class="text-xl font-black text-slate-800">Customers</h2>
         <p class="text-sm text-slate-400"><?php echo $totalCustomers; ?> registered customers (synced from orders)</p>
     </div>
+    <form id="customer-bulk-delete" method="POST" onsubmit="return confirm('Delete selected customers?');">
+        <input type="hidden" name="form_action" value="bulk_delete_customers">
+        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl px-4 py-2 text-sm flex items-center gap-2">
+            <i class="ri-delete-bin-line"></i> Delete Selected
+        </button>
+    </form>
 </div>
 
 <form method="GET" class="bg-white rounded-2xl border border-slate-200 p-4 mb-5 flex flex-wrap gap-3">
@@ -259,6 +278,9 @@ if ($viewId > 0) {
         <table class="w-full text-sm">
             <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                 <tr>
+                    <th class="px-5 py-3.5 text-left w-10">
+                        <input type="checkbox" id="select-all-customers" class="w-4 h-4 rounded border-slate-300 text-navy-600">
+                    </th>
                     <th class="px-5 py-3.5 text-left">Customer</th>
                     <th class="px-5 py-3.5 text-left">Contact</th>
                     <th class="px-5 py-3.5 text-left">Orders</th>
@@ -271,6 +293,9 @@ if ($viewId > 0) {
             <tbody class="divide-y divide-slate-100">
                 <?php foreach($customers as $c): ?>
                 <tr class="hover:bg-slate-50 transition">
+                    <td class="px-5 py-3.5">
+                        <input form="customer-bulk-delete" type="checkbox" name="customer_ids[]" value="<?php echo (int)$c['id']; ?>" class="customer-select w-4 h-4 rounded border-slate-300 text-navy-600">
+                    </td>
                     <td class="px-5 py-3.5">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black shrink-0" style="background: linear-gradient(135deg, #2563EB, #0F172A)"><?php echo e(strtoupper(substr($c['name'], 0, 1))); ?></div>
@@ -295,7 +320,7 @@ if ($viewId > 0) {
                     </td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if (!$customers): ?><tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">No customers found. Customers are auto-synced from orders.</td></tr><?php endif; ?>
+                <?php if (!$customers): ?><tr><td colspan="8" class="px-5 py-8 text-center text-slate-400">No customers found. Customers are auto-synced from orders.</td></tr><?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -306,6 +331,7 @@ if ($viewId > 0) {
     <?php foreach($customers as $c): ?>
     <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-md transition card-hover">
         <div class="flex items-start gap-3 mb-4">
+            <input form="customer-bulk-delete" type="checkbox" name="customer_ids[]" value="<?php echo (int)$c['id']; ?>" class="customer-select mt-3 w-4 h-4 rounded border-slate-300 text-navy-600">
             <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-lg shrink-0"
                  style="background: linear-gradient(135deg, #2563EB, #0F172A)">
                 <?php echo e(strtoupper(substr($c['name'], 0, 1))); ?>
@@ -364,3 +390,8 @@ if ($viewId > 0) {
 <?php render_pagination($totalCustomers, $pagination); ?>
 <?php endif; ?>
 </div>
+<script>
+document.getElementById('select-all-customers')?.addEventListener('change', function () {
+  document.querySelectorAll('.customer-select').forEach(input => { input.checked = this.checked; });
+});
+</script>

@@ -10,7 +10,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
             $tmpName = $_FILES['image_file']['tmp_name'];
             $origName = preg_replace('/[^a-zA-Z0-9._-]/', '', $_FILES['image_file']['name']);
-            $fileName = time() . '_' . $origName;
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+            $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            if (!in_array($ext, $allowedExts, true)) {
+                set_flash('Please upload a valid banner image.', 'error');
+                redirect_admin('banners');
+            }
+            $fileName = time() . '_' . ($origName ?: 'banner.' . $ext);
             $uploadDir = __DIR__ . '/../../uploads/banners/';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);
@@ -19,26 +25,28 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 $imageUrl = 'uploads/banners/' . $fileName;
             }
         }
+        if (trim($imageUrl) === '') {
+            set_flash('Please upload a banner image.', 'error');
+            redirect_admin('banners');
+        }
         $data = [
-            trim($_POST['title'] ?? ''),
-            trim($_POST['subtitle'] ?? ''),
-            trim($_POST['badge'] ?? ''),
-            trim($_POST['button_text'] ?? 'Shop Now'),
-            trim($_POST['link_url'] ?? ''),
-            trim($_POST['secondary_button_text'] ?? ''),
-            trim($_POST['secondary_link_url'] ?? ''),
+            trim($_POST['title'] ?? '') ?: 'Home Banner ' . date('YmdHis'),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
             trim($imageUrl),
-            in_array($_POST['poster_style'] ?? 'standard', ['standard','poster_light','poster_dark','poster_teal'], true) ? $_POST['poster_style'] : 'standard',
-            trim($_POST['location'] ?? 'Homepage Hero'),
-            trim($_POST['bg_theme'] ?? 'navy'),
+            'standard',
+            'Homepage Hero',
+            'navy',
             in_array($_POST['status'] ?? 'active', ['active','inactive','scheduled'], true) ? $_POST['status'] : 'active',
             $_POST['start_date'] ?: null,
             $_POST['end_date'] ?: null,
             (int)($_POST['sort_order'] ?? 1),
         ];
-        if ($data[0] === '') {
-            set_flash('Banner title is required.', 'error');
-        } elseif ($bannerId > 0) {
+        if ($bannerId > 0) {
             $pdo->prepare('UPDATE banners SET title=?, subtitle=?, badge=?, button_text=?, link_url=?, secondary_button_text=?, secondary_link_url=?, image_url=?, poster_style=?, location=?, bg_theme=?, status=?, start_date=?, end_date=?, sort_order=? WHERE id=?')->execute([...$data, $bannerId]);
             set_flash('Banner updated successfully.');
         } else {
@@ -58,7 +66,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     }
 }
 
-$banner = ['id'=>0,'title'=>'','subtitle'=>'','badge'=>'','button_text'=>'Shop Now','link_url'=>'','secondary_button_text'=>'','secondary_link_url'=>'','image_url'=>'','poster_style'=>'standard','location'=>'Homepage Hero','bg_theme'=>'navy','status'=>'active','start_date'=>'','end_date'=>'','sort_order'=>1];
+$banner = ['id'=>0,'title'=>'','subtitle'=>'','badge'=>'','button_text'=>'Shop Now','link_url'=>'products.php','secondary_button_text'=>'','secondary_link_url'=>'','image_url'=>'','poster_style'=>'poster_light','location'=>'Homepage Hero','bg_theme'=>'navy','status'=>'active','start_date'=>'','end_date'=>'','sort_order'=>1];
 if ($action === 'edit' && $id > 0) {
     $stmt = $pdo->prepare('SELECT * FROM banners WHERE id = ?');
     $stmt->execute([$id]);
@@ -74,30 +82,24 @@ $themes = ['navy'=>'from-navy-900 to-navy-700','emerald'=>'from-emerald-700 to-e
 <div class="max-w-3xl mx-auto">
     <div class="flex items-center gap-3 mb-6">
         <a href="?page=banners" class="p-2 rounded-xl hover:bg-slate-100 text-slate-500"><i class="ri-arrow-left-line text-xl"></i></a>
-        <div><h2 class="text-xl font-black text-slate-800"><?php echo $action==='add'?'Add New Banner':'Edit Banner'; ?></h2><p class="text-sm text-slate-400">Configure banner details and display settings</p></div>
+        <div><h2 class="text-xl font-black text-slate-800"><?php echo $action==='add'?'Add New Banner':'Edit Banner'; ?></h2><p class="text-sm text-slate-400">Upload a homepage banner image</p></div>
     </div>
     <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <input type="hidden" name="form_action" value="save_banner"><input type="hidden" name="id" value="<?php echo (int)$banner['id']; ?>">
         <div class="lg:col-span-2 space-y-5">
             <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-                <h4 class="font-bold text-slate-700 text-sm border-b border-slate-100 pb-3 flex items-center gap-2"><i class="ri-image-2-line text-navy-600"></i> Banner Content</h4>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Banner Title</label><input name="title" required value="<?php echo e($banner['title']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600"></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Subtitle</label><textarea name="subtitle" rows="2" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600 resize-none"><?php echo e($banner['subtitle']); ?></textarea></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-semibold text-slate-700 mb-2">Badge Text</label><input name="badge" value="<?php echo e($banner['badge']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600"></div><div><label class="block text-sm font-semibold text-slate-700 mb-2">Button Text</label><input name="button_text" value="<?php echo e($banner['button_text']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600"></div></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Link URL</label><input name="link_url" value="<?php echo e($banner['link_url']); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600"></div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-semibold text-slate-700 mb-2">Second Button</label><input name="secondary_button_text" value="<?php echo e($banner['secondary_button_text'] ?? ''); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600"></div><div><label class="block text-sm font-semibold text-slate-700 mb-2">Second Link</label><input name="secondary_link_url" value="<?php echo e($banner['secondary_link_url'] ?? ''); ?>" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-navy-600"></div></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Poster Image</label><input type="file" name="image_file" accept="image/*" class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-navy-600 bg-white"><input type="hidden" name="existing_image_url" value="<?php echo e($banner['image_url'] ?? ''); ?>"><?php if(!empty($banner['image_url'])): ?><div class="mt-2 text-xs text-slate-500">Current: <a href="../<?php echo e($banner['image_url']); ?>" target="_blank" class="text-indigo-600 hover:underline"><?php echo e($banner['image_url']); ?></a></div><?php endif; ?></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Poster Style</label><select name="poster_style" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white"><?php foreach(['standard'=>'Standard','poster_light'=>'Poster Light','poster_dark'=>'Poster Dark','poster_teal'=>'Poster Teal'] as $style=>$label): ?><option value="<?php echo e($style); ?>" <?php echo ($banner['poster_style'] ?? 'standard')===$style?'selected':''; ?>><?php echo e($label); ?></option><?php endforeach; ?></select></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Background Theme</label><select name="bg_theme" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white"><?php foreach(array_keys($themes) as $theme): ?><option value="<?php echo e($theme); ?>" <?php echo $banner['bg_theme']===$theme?'selected':''; ?>><?php echo e(ucfirst($theme)); ?></option><?php endforeach; ?></select></div>
+                <h4 class="font-bold text-slate-700 text-sm border-b border-slate-100 pb-3 flex items-center gap-2"><i class="ri-image-2-line text-navy-600"></i> Banner Image</h4>
+                <input type="hidden" name="title" value="<?php echo e($banner['title']); ?>">
+                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Banner Image Upload</label><input type="file" name="image_file" accept="image/*" <?php echo empty($banner['image_url']) ? 'required' : ''; ?> class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-navy-600 bg-white"><input type="hidden" name="existing_image_url" value="<?php echo e($banner['image_url'] ?? ''); ?>"><?php if(!empty($banner['image_url'])): ?><div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50"><img src="../<?php echo e($banner['image_url']); ?>" alt="Current banner" class="w-full h-56 object-cover"></div><div class="mt-2 text-xs text-slate-500">Current: <a href="../<?php echo e($banner['image_url']); ?>" target="_blank" class="text-indigo-600 hover:underline"><?php echo e($banner['image_url']); ?></a></div><?php endif; ?></div>
             </div>
         </div>
         <div class="space-y-5">
             <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
                 <h4 class="font-bold text-slate-700 text-sm border-b border-slate-100 pb-3 flex items-center gap-2"><i class="ri-settings-3-line text-slate-500"></i> Settings</h4>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Display Location</label><input name="location" value="<?php echo e($banner['location']); ?>" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-navy-600"></div>
+                <input type="hidden" name="location" value="Homepage Hero">
                 <div><label class="block text-sm font-semibold text-slate-700 mb-2">Status</label><select name="status" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white"><?php foreach(['active','inactive','scheduled'] as $status): ?><option value="<?php echo e($status); ?>" <?php echo $banner['status']===$status?'selected':''; ?>><?php echo e(ucfirst($status)); ?></option><?php endforeach; ?></select></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">Start Date</label><input name="start_date" type="date" value="<?php echo e($banner['start_date']); ?>" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-navy-600"></div>
-                <div><label class="block text-sm font-semibold text-slate-700 mb-2">End Date</label><input name="end_date" type="date" value="<?php echo e($banner['end_date']); ?>" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-navy-600"></div>
+                <input type="hidden" name="start_date" value="<?php echo e($banner['start_date']); ?>">
+                <input type="hidden" name="end_date" value="<?php echo e($banner['end_date']); ?>">
                 <div><label class="block text-sm font-semibold text-slate-700 mb-2">Sort Order</label><input name="sort_order" type="number" value="<?php echo (int)$banner['sort_order']; ?>" min="1" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-navy-600"></div>
             </div>
             <button class="w-full bg-navy-600 hover:bg-navy-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm"><i class="ri-save-line"></i> Save Banner</button>

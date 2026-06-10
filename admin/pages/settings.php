@@ -11,14 +11,14 @@ $settingSections = [
         'badge'  => 'bg-blue-50 text-blue-600',
         'desc'   => 'Basic store identity, address & branding.',
         'fields' => [
-            ['store_name',        'Store Name',           'text',     'GeekSupportSales',                                    'ri-store-2-line'],
+            ['store_name',        'Store Name',           'text',     'geeksupportllc',                                    'ri-store-2-line'],
             ['tagline',           'Tagline',              'text',     'Your Printer Experts',                                'ri-price-tag-3-line'],
-            ['store_url',         'Store URL',            'url',      'https://geeksupportsales.com',                        'ri-global-line'],
+            ['store_url',         'Store URL',            'url',      'https://geeksupportllc.com',                        'ri-global-line'],
             ['store_description', 'Store Description',   'textarea', 'Shop printers, ink, and toner with expert support.',  'ri-file-text-line'],
-            ['store_address',     'Store Address',        'textarea', '123 Tech Boulevard, Silicon Valley, CA 94025',        'ri-map-pin-line'],
+            ['store_address',     'Store Address',        'textarea', '4307 Vineland Road, Suite H-12 Orlando, FL 3281',     'ri-map-pin-line'],
             ['store_country',     'Country',              'text',     'United States',                                       'ri-earth-line'],
-            ['store_city',        'City',                 'text',     'Silicon Valley',                                      'ri-building-line'],
-            ['store_zip',         'ZIP / Postal Code',    'text',     '94025',                                               'ri-map-2-line'],
+            ['store_city',        'City',                 'text',     'Orlando',                                             'ri-building-line'],
+            ['store_zip',         'ZIP / Postal Code',    'text',     '3281',                                                'ri-map-2-line'],
             ['store_logo_url',    'Logo URL',             'url',      '',                                                    'ri-image-line'],
             ['store_favicon_url', 'Favicon URL',          'url',      '',                                                    'ri-image-2-line'],
         ],
@@ -31,8 +31,8 @@ $settingSections = [
         'badge'  => 'bg-emerald-50 text-emerald-600',
         'desc'   => 'Customer-facing contact details and support channels.',
         'fields' => [
-            ['store_email',         'Support Email',              'email',  'support@geeksupportsales.com', 'ri-mail-line'],
-            ['phone',               'Primary Phone',              'text',   '8019511533',                  'ri-phone-line'],
+            ['store_email',         'Support Email',              'email',  'support@geeksupportllc.com', 'ri-mail-line'],
+            ['phone',               'Primary Phone',              'text',   '407-246-9887',                  'ri-phone-line'],
             ['whatsapp_number',     'WhatsApp Number',            'text',   '',                            'ri-whatsapp-line'],
             ['support_hours',       'Support Hours',              'text',   '24/7 Tech Support',           'ri-customer-service-2-line'],
             ['contact_form_email',  'Contact Form Recipient',     'email',  '',                            'ri-mail-send-line'],
@@ -118,15 +118,15 @@ $settingSections = [
             ['smtp_username',          'SMTP Username',              'email',    '',                              'ri-user-line'],
             ['smtp_password',          'SMTP Password',              'password', '',                              'ri-lock-password-line'],
             ['smtp_encryption',        'Encryption',                 'select',   'tls',                           'ri-shield-keyhole-line', ['tls'=>'TLS','ssl'=>'SSL','none'=>'None']],
-            ['email_from_name',        'From Name',                  'text',     'GeekSupportSales',              'ri-account-circle-line'],
-            ['email_from_address',     'From Email',                 'email',    'noreply@geeksupportsales.com',  'ri-mail-open-line'],
+            ['email_from_name',        'From Name',                  'text',     'geeksupportllc',              'ri-account-circle-line'],
+            ['email_from_address',     'From Email',                 'email',    'noreply@geeksupportllc.com',  'ri-mail-open-line'],
             ['order_confirm_email',    'Order Confirmation',         'toggle',   'enabled',                       'ri-mail-check-line'],
             ['shipping_notify_email',  'Shipping Notification',      'toggle',   'enabled',                       'ri-truck-line'],
             ['refund_notify_email',    'Refund Notification',        'toggle',   'enabled',                       'ri-refund-2-line'],
             ['welcome_email',          'Welcome Email on Register',  'toggle',   'enabled',                       'ri-mail-heart-line'],
             ['abandoned_cart_email',   'Abandoned Cart Email',       'toggle',   'disabled',                      'ri-shopping-cart-2-line'],
             ['newsletter_enabled',     'Newsletter Signup',          'toggle',   'disabled',                      'ri-newspaper-line'],
-            ['email_footer_text',      'Email Footer Text',          'textarea', '© 2025 GeekSupportSales',       'ri-text-snippet'],
+            ['email_footer_text',      'Email Footer Text',          'textarea', '© 2025 geeksupportllc',       'ri-text-snippet'],
         ],
     ],
 
@@ -138,10 +138,12 @@ $settingSections = [
         'desc'   => 'Announcements, meta tags, analytics & social links.',
         'fields' => [
             ['announcement_text',      'Top Announcement Bar',        'textarea', 'Free Shipping on orders over $99 | Free Expert Setup | 24/7 Tech Support', 'ri-megaphone-line'],
-            ['default_meta_title',     'Default Meta Title',          'text',     'GeekSupportSales - Printer Sales & Setup Support', 'ri-search-eye-line'],
-            ['default_meta_description','Default Meta Description',   'textarea', 'Shop printers, ink, and toner with expert setup support.', 'ri-file-text-line'],
+            ['default_meta_title',     'Default Meta Title',          'text',     'geeksupportllc - Printer Sales & Setup Support in Orlando', 'ri-search-eye-line'],
+            ['default_meta_description','Default Meta Description',   'textarea', 'Shop printers, ink, and toner with expert setup support in Orlando, FL.', 'ri-file-text-line'],
+            ['default_meta_keywords',  'Default Meta Keywords',       'textarea', 'Printers in Orlando, Printer Repair Orlando FL, Geek Support Sales Orlando, Printer Setup Orlando Florida, Ink and Toner Orlando', 'ri-hashtag'],
             ['google_analytics_id',    'Google Analytics ID (GA4)',   'text',     '',          'ri-google-line'],
             ['google_tag_manager_id',  'Google Tag Manager ID',       'text',     '',          'ri-code-s-slash-line'],
+            ['google_site_verification','Google Search Console ID',     'text',     '',          'ri-google-line'],
             ['facebook_pixel_id',      'Facebook Pixel ID',           'text',     '',          'ri-facebook-circle-line'],
             ['facebook_url',           'Facebook Page URL',           'url',      '',          'ri-facebook-circle-line'],
             ['instagram_url',          'Instagram URL',               'url',      '',          'ri-instagram-line'],
@@ -263,7 +265,7 @@ $settingSections = [
             ['homepage_hero_bg_image', 'Hero Background Image URL','url',     '',         'ri-image-fill'],
             ['homepage_hero_cta_text', 'Hero Button Text',        'text',     'Shop Now', 'ri-cursor-line'],
             ['homepage_hero_cta_url',  'Hero Button URL',         'url',      '/products','ri-links-line'],
-            ['footer_text',            'Footer Copyright Text',   'text',     '© 2025 GeekSupportSales. All rights reserved.','ri-copyright-line'],
+            ['footer_text',            'Footer Copyright Text',   'text',     '© 2025 geeksupportllc. All rights reserved.','ri-copyright-line'],
             ['products_grid_columns',  'Product Grid Columns',    'select',   '4',        'ri-layout-grid-line',['3'=>'3 Columns','4'=>'4 Columns','5'=>'5 Columns']],
             ['custom_css',             'Custom CSS',              'textarea', '',         'ri-css3-line'],
             ['custom_js',              'Custom JS (Head)',         'textarea', '',         'ri-javascript-line'],
@@ -453,7 +455,7 @@ function render_setting_field(array $field, array $settings): void
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-black text-slate-900 leading-tight">Store Settings</h1>
-            <p class="text-sm text-slate-400 mt-0.5">Manage every aspect of your GeekSupportSales store.</p>
+            <p class="text-sm text-slate-400 mt-0.5">Manage every aspect of your geeksupportllc store.</p>
         </div>
         <!-- Search box -->
         <div class="relative w-full sm:w-72">
@@ -513,7 +515,7 @@ function render_setting_field(array $field, array $settings): void
 
         <!-- Main content -->
         <div class="flex-1 min-w-0">
-            <form method="POST" id="settingsForm" class="space-y-5">
+            <form method="POST" id="settingsForm" class="space-y-5" novalidate>
                 <input type="hidden" name="form_action" value="save_settings">
 
                 <?php $idx = 0; foreach ($settingSections as $sTitle => $sData): ?>
@@ -701,3 +703,4 @@ document.getElementById('settingsForm').addEventListener('submit', function () {
     btn.disabled  = true;
 });
 </script>
+

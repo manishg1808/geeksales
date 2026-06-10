@@ -61,7 +61,7 @@ class ProductModel
         $oldPrice = (float)($row['old_price'] ?? 0);
         $badge = (string)($row['badge'] ?? '');
         $description = (string)($row['short_description'] ?: $row['description'] ?: '');
-        $rating = max(4.4, min(4.9, (float)($row['rating'] ?? 4.7)));
+        $rating = max(0, min(5, (float)($row['rating'] ?? 0)));
 
         return [
             'id' => (int)$row['id'],
@@ -84,7 +84,6 @@ class ProductModel
             'color' => $this->productColor($brand, $cat),
             'iconColor' => $this->iconColor($brand, $cat),
             'features' => $this->features($description, $cat),
-            'ppm' => $this->ppm($description, $cat),
             'desc' => $description,
             'description' => $description,
             'specs' => $this->specs($row, $cat),
@@ -94,6 +93,7 @@ class ProductModel
             'stock' => (int)($row['stock'] ?? 0),
             'top_pick' => (int)($row['top_pick'] ?? 0),
             'featured' => (int)($row['featured'] ?? 0),
+            'image_url' => (string)($row['image_url'] ?? ''),
         ];
     }
 
@@ -163,19 +163,6 @@ class ProductModel
             $features[] = 'mobile';
         }
         return array_values(array_unique($features));
-    }
-
-    private function ppm(string $description, string $cat): ?int
-    {
-        if (preg_match('/(\d+)\s*ppm/i', $description, $matches)) {
-            return (int)$matches[1];
-        }
-        return match ($cat) {
-            'laser' => 32,
-            'business' => 24,
-            'ink' => null,
-            default => 10,
-        };
     }
 
     private function specs(array $row, string $cat): array

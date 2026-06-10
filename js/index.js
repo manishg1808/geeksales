@@ -21,18 +21,20 @@
     o.classList.toggle('hidden', open);
   }
 
-  function addToCart(name, price) {
+  function addToCart(name, price, imageUrl = '') {
     const ex = cart.find(i => i.name === name);
-    ex ? ex.qty++ : cart.push({ name, price, qty: 1 });
+    ex ? ex.qty++ : cart.push({ name, price, qty: 1, image_url: imageUrl });
+    if (ex && imageUrl && !ex.image_url) ex.image_url = imageUrl;
     saveCart();
     renderCart();
     document.getElementById('cart-sidebar').classList.remove('translate-x-full');
     document.getElementById('cart-overlay').classList.remove('hidden');
   }
 
-  function buyNow(name, price) {
+  function buyNow(name, price, imageUrl = '') {
     const ex = cart.find(i => i.name === name);
-    ex ? ex.qty++ : cart.push({ name, price, qty: 1 });
+    ex ? ex.qty++ : cart.push({ name, price, qty: 1, image_url: imageUrl });
+    if (ex && imageUrl && !ex.image_url) ex.image_url = imageUrl;
     saveCart();
     window.location.href = 'checkout.php';
   }
@@ -57,7 +59,9 @@
     }
     el.innerHTML = cart.map(item => `
       <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
-        <div class="bg-navy-50 rounded-lg p-2 shrink-0"><i class="ri-printer-fill text-navy-600 text-lg"></i></div>
+        <div class="bg-navy-50 rounded-lg w-11 h-11 flex items-center justify-center shrink-0 overflow-hidden">
+          ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" class="w-full h-full object-contain p-1">` : `<i class="ri-printer-fill text-navy-600 text-lg"></i>`}
+        </div>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-semibold text-slate-800 truncate">${item.name}</p>
           <p class="text-xs text-slate-400">Qty: ${item.qty} × $${item.price.toFixed(2)}</p>
@@ -71,15 +75,58 @@
 
   document.addEventListener('DOMContentLoaded', renderCart);
 
-  // Countdown
-  let countdown = 8 * 3600 + 45 * 60 + 30;
-  setInterval(() => {
-    if (countdown <= 0) return;
-    countdown--;
-    const h = Math.floor(countdown / 3600);
-    const m = Math.floor((countdown % 3600) / 60);
-    const s = countdown % 60;
-    document.getElementById('hours').textContent = String(h).padStart(2,'0');
-    document.getElementById('mins').textContent = String(m).padStart(2,'0');
-    document.getElementById('secs').textContent = String(s).padStart(2,'0');
-  }, 1000);
+  // Scroll-expand banner animation
+  const scrollSection = document.getElementById('scroll-expand-section');
+  const scrollInner = document.getElementById('scroll-expand-inner');
+
+  if (scrollSection && scrollInner) {
+    const handleScrollExpand = () => {
+      const rect = scrollSection.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      const triggerStart = viewportHeight; // Enters from bottom
+      const triggerEnd = viewportHeight * 0.35; // past center of viewport
+      
+      if (rect.top < triggerStart && rect.bottom > 0) {
+        const totalDistance = triggerStart - triggerEnd;
+        const currentDistance = triggerStart - rect.top;
+        const progress = Math.min(1, Math.max(0, currentDistance / totalDistance));
+        
+        const borderRadius = 16 * (1 - progress);
+        const paddingX = 20 * (1 - progress); 
+        const paddingY = 32 * (1 - progress / 2); 
+        
+        if (window.innerWidth > 1280) {
+          const maxWidth = 1280 + (window.innerWidth - 1280) * progress;
+          scrollInner.style.maxWidth = `${maxWidth}px`;
+        } else {
+          scrollInner.style.maxWidth = '100%';
+        }
+        
+        scrollInner.style.borderRadius = `${borderRadius}px`;
+        scrollSection.style.paddingLeft = `${paddingX}px`;
+        scrollSection.style.paddingRight = `${paddingX}px`;
+        scrollSection.style.paddingTop = `${paddingY}px`;
+        scrollSection.style.paddingBottom = `${paddingY}px`;
+      } else if (rect.top >= triggerStart) {
+        scrollInner.style.maxWidth = '1280px';
+        scrollInner.style.borderRadius = '16px';
+        scrollSection.style.paddingLeft = '20px';
+        scrollSection.style.paddingRight = '20px';
+        scrollSection.style.paddingTop = '32px';
+        scrollSection.style.paddingBottom = '32px';
+      } else if (rect.bottom <= 0) {
+        scrollInner.style.maxWidth = '100%';
+        scrollInner.style.borderRadius = '0px';
+        scrollSection.style.paddingLeft = '0px';
+        scrollSection.style.paddingRight = '0px';
+        scrollSection.style.paddingTop = '16px';
+        scrollSection.style.paddingBottom = '16px';
+      }
+    };
+
+    const throttledScroll = window.throttle ? window.throttle(handleScrollExpand, 10) : handleScrollExpand;
+    window.addEventListener('scroll', throttledScroll);
+    window.addEventListener('resize', throttledScroll);
+    setTimeout(handleScrollExpand, 100);
+  }

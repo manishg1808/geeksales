@@ -9,7 +9,7 @@ function saveCart() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  const id = parseInt(params.get('id') || '1', 10);
+  const id = window.productId || parseInt(params.get('id') || '1', 10);
   loadProduct(Number.isFinite(id) ? id : 1);
   renderCart();
   setDeliveryDate();
@@ -50,6 +50,7 @@ function productType(cat) {
 function normalizeProduct(p) {
   const price = Number(p.price) || 0;
   const oldPrice = Number(p.oldPrice ?? p.old_price ?? 0) || 0;
+  const rating = Number(p.rating);
   const cat = p.cat || (p.category_slug === 'all-in-one' ? 'allinone' : p.category_slug === 'ink-toner' ? 'ink' : p.category_slug) || 'inkjet';
 
   return {
@@ -60,7 +61,7 @@ function normalizeProduct(p) {
     cat,
     price,
     oldPrice,
-    rating: Number(p.rating) || 4.7,
+    rating: Number.isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0,
     reviews: Number(p.reviews) || 120,
     badge: p.badge || '',
     badgeColor: p.badgeColor || 'navy',
@@ -70,8 +71,8 @@ function normalizeProduct(p) {
     specs: Array.isArray(p.specs) ? p.specs : [],
     inbox: Array.isArray(p.inbox) ? p.inbox : [],
     desc: p.desc || p.description || '',
-    ppm: p.ppm ? Number(p.ppm) : null,
     newest: Boolean(p.newest),
+    image_url: p.image_url || p.imageUrl || '',
   };
 }
 
@@ -88,7 +89,8 @@ async function loadProduct(id) {
     const p = normalizeProduct(result.data.product);
     currentProduct = p;
     window.currentProduct = p;
-    document.title = `${p.name} - GeekSupportSales`;
+    qty = 1;
+    document.title = `${p.name} - Geek Support LLc`;
 
     setText('bc-name', p.name);
     const bcCat = document.getElementById('bc-cat');
@@ -98,7 +100,6 @@ async function loadProduct(id) {
     }
 
     renderMainProduct(p);
-    renderReviews(p);
     renderRelated((result.data.related || []).map(normalizeProduct));
 
     if (typeof wlRefreshAll === 'function') wlRefreshAll();
@@ -128,7 +129,15 @@ function renderMainProduct(p) {
   }
 
   const mainWrap = document.getElementById('main-img-wrap');
-  if (mainWrap) mainWrap.style.background = p.color;
+  if (p.image_url && mainWrap) {
+      mainWrap.style.background = 'transparent';
+      mainWrap.innerHTML = `<img src="${p.image_url}" class="w-full h-full object-contain p-4 transition-transform duration-400" id="main-img" alt="${escapeAttr(p.name)}" />` +
+        (p.badge ? `<span id="main-badge" class="absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-lg badge-pulse ${badgeCls(p.badgeColor)}">${p.badge}</span>` : '') +
+        `<button id="main-wl" onclick="toggleWishlist()" class="absolute top-4 right-4 w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow hover:border-red-300 transition"><i class="ri-heart-3-line text-slate-400 text-lg"></i></button>` +
+        `<div class="absolute bottom-3 right-3 bg-black/30 text-white text-[10px] px-2 py-1 rounded-lg flex items-center gap-1 pointer-events-none"><i class="ri-zoom-in-line"></i> Hover to zoom</div>`;
+  } else {
+      if (mainWrap) mainWrap.style.background = p.color;
+  }
 
   const thumbIcon = document.getElementById('thumb-icon-1');
   if (thumbIcon) {
@@ -153,8 +162,7 @@ function renderMainProduct(p) {
   setText('pd-cat', productType(p.cat));
   setText('pd-rating-num', p.rating.toFixed(1));
   setText('pd-reviews', `(${p.reviews} reviews)`);
-  setText('pd-price', `$${p.price.toFixed(2)}`);
-  setText('buy-price', `$${p.price.toFixed(2)}`);
+  setText('pd-price', formatMoney(p.price));
   setText('buy-sku', String(1000 + p.id));
   setText('pd-desc', p.desc);
 
@@ -180,36 +188,21 @@ function renderMainProduct(p) {
   if (p.oldPrice > p.price) {
     const saved = (p.oldPrice - p.price).toFixed(2);
     if (oldPrice) {
-      oldPrice.textContent = `$${p.oldPrice.toFixed(2)}`;
+      oldPrice.textContent = formatMoney(p.oldPrice);
       oldPrice.classList.remove('hidden');
-    }
-    if (buyOld) {
-      buyOld.textContent = `$${p.oldPrice.toFixed(2)}`;
-      buyOld.classList.remove('hidden');
     }
     if (save) {
       save.textContent = `Save $${saved}`;
       save.classList.remove('hidden');
     }
   }
+  updateQuantityPricing();
 
   const features = document.getElementById('pd-features');
   if (features) {
     features.innerHTML = p.features.map(feature => (
       `<span class="inline-flex items-center gap-1 text-xs bg-navy-50 text-navy-700 font-semibold px-3 py-1.5 rounded-full"><i class="ri-check-line"></i>${escapeHtml(titleCase(feature))}</span>`
     )).join('');
-  }
-
-  const ppmWrap = document.getElementById('pd-ppm-wrap');
-  if (ppmWrap) {
-    ppmWrap.classList.toggle('hidden', !p.ppm);
-    if (p.ppm) {
-      setText('pd-ppm-label', `${p.ppm} ppm`);
-      setTimeout(() => {
-        const bar = document.getElementById('pd-ppm-bar');
-        if (bar) bar.style.width = `${Math.min((p.ppm / 50) * 100, 100)}%`;
-      }, 100);
-    }
   }
 
   const specsGrid = document.getElementById('specs-grid');
@@ -295,12 +288,12 @@ function renderRelated(related) {
   grid.innerHTML = related.map(p => `
     <a href="product-detail.php?id=${p.id}" class="card-lift bg-white border border-slate-200 rounded-2xl overflow-hidden group block">
       <div class="h-32 flex items-center justify-center p-4" style="background:${p.color}">
-        <i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill group-hover:scale-110 transition-transform duration-300" style="font-size:60px;color:${p.iconColor};line-height:1"></i>
+        ${p.image_url ? `<img src="${escapeAttr(p.image_url)}" alt="${escapeAttr(p.name)}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">` : `<i class="ri-${p.cat === 'ink' ? 'ink-bottle' : 'printer'}-fill group-hover:scale-110 transition-transform duration-300" style="font-size:60px;color:${p.iconColor};line-height:1"></i>`}
       </div>
       <div class="p-3">
         <p class="text-[10px] font-bold uppercase tracking-widest" style="color:${p.iconColor}">${escapeHtml(p.brand)}</p>
         <h4 class="font-bold text-slate-800 text-xs mt-0.5 leading-snug">${escapeHtml(p.name)}</h4>
-        <div class="flex items-center gap-1 mt-1 text-amber2-400 text-[10px]">${starsHtml(p.rating)}<span class="text-slate-400 ml-1">(${p.reviews})</span></div>
+        <div class="flex items-center gap-1 mt-1 text-amber2-400 text-[10px]">${starsHtml(p.rating)}<span class="text-slate-500 ml-1 font-semibold">${p.rating.toFixed(1)}</span><span class="text-slate-400">(${p.reviews})</span></div>
         <div class="flex items-baseline gap-1.5 mt-1.5">
           <span class="font-black text-slate-800 text-sm">$${p.price.toFixed(2)}</span>
           ${p.oldPrice > p.price ? `<span class="text-[10px] text-slate-400 line-through">$${p.oldPrice.toFixed(2)}</span>` : ''}
@@ -326,6 +319,51 @@ function switchTab(name, btn) {
 function changeQty(delta) {
   qty = Math.max(1, Math.min(10, qty + delta));
   setText('qty-display', String(qty));
+  updateQuantityPricing();
+}
+
+function updateQuantityPricing() {
+  if (!window.currentProduct) return;
+  const total = window.currentProduct.price * qty;
+  const oldTotal = window.currentProduct.oldPrice * qty;
+  
+  // Update Buy Box Price
+  setText('buy-price', formatMoney(total));
+  const buyOld = document.getElementById('buy-old');
+  if (buyOld) {
+    if (window.currentProduct.oldPrice > window.currentProduct.price) {
+      buyOld.textContent = formatMoney(oldTotal);
+      buyOld.classList.remove('hidden');
+    } else {
+      buyOld.textContent = '';
+      buyOld.classList.add('hidden');
+    }
+  }
+
+  // Update Main Details Price
+  setText('pd-price', formatMoney(total));
+  const pdOldPrice = document.getElementById('pd-old-price');
+  if (pdOldPrice) {
+    if (window.currentProduct.oldPrice > window.currentProduct.price) {
+      pdOldPrice.textContent = formatMoney(oldTotal);
+      pdOldPrice.classList.remove('hidden');
+    } else {
+      pdOldPrice.textContent = '';
+      pdOldPrice.classList.add('hidden');
+    }
+  }
+
+  // Update Savings
+  const pdSave = document.getElementById('pd-save');
+  if (pdSave) {
+    if (window.currentProduct.oldPrice > window.currentProduct.price) {
+      const saved = (oldTotal - total).toFixed(2);
+      pdSave.textContent = `Save $${saved}`;
+      pdSave.classList.remove('hidden');
+    } else {
+      pdSave.classList.add('hidden');
+    }
+  }
 }
 
 function toggleWishlist() {
@@ -343,7 +381,8 @@ function addToCartDetail() {
   if (!window.currentProduct) return;
   for (let i = 0; i < qty; i++) {
     const existing = cart.find(item => item.name === window.currentProduct.name);
-    existing ? existing.qty++ : cart.push({ name: window.currentProduct.name, price: window.currentProduct.price, qty: 1 });
+    existing ? existing.qty++ : cart.push({ name: window.currentProduct.name, price: window.currentProduct.price, qty: 1, image_url: window.currentProduct.image_url || '' });
+    if (existing && window.currentProduct.image_url && !existing.image_url) existing.image_url = window.currentProduct.image_url;
   }
   saveCart();
   renderCart();
@@ -413,7 +452,9 @@ function renderCart() {
 
   el.innerHTML = cart.map(item => `
     <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
-      <div class="bg-navy-50 rounded-lg p-2 shrink-0"><i class="ri-printer-fill text-navy-600 text-lg"></i></div>
+      <div class="bg-navy-50 rounded-lg w-11 h-11 flex items-center justify-center shrink-0 overflow-hidden">
+        ${item.image_url ? `<img src="${escapeAttr(item.image_url)}" alt="${escapeAttr(item.name)}" class="w-full h-full object-contain p-1">` : `<i class="ri-printer-fill text-navy-600 text-lg"></i>`}
+      </div>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-semibold text-slate-800 truncate">${escapeHtml(item.name)}</p>
         <p class="text-xs text-slate-400">Qty: ${item.qty} x $${item.price.toFixed(2)}</p>
@@ -456,4 +497,8 @@ function escapeHtml(value) {
 
 function escapeAttr(value) {
   return escapeHtml(value).replace(/`/g, '&#096;');
+}
+
+function formatMoney(value) {
+  return `$${(Number(value) || 0).toFixed(2)}`;
 }

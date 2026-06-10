@@ -27,13 +27,8 @@ if (!function_exists('admin_badge_counts')) {
             'pending_orders' => (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn(),
             'requested_refunds' => (int)$pdo->query("SELECT COUNT(*) FROM refunds WHERE status = 'requested'")->fetchColumn(),
             'new_leads' => (int)$pdo->query("SELECT COUNT(*) FROM leads WHERE status = 'new'")->fetchColumn(),
-            'pending_reviews' => 0,
-            'active_coupons' => 0,
             'cached_at' => time(),
         ];
-
-        try { $counts['pending_reviews'] = (int)$pdo->query("SELECT COUNT(*) FROM reviews WHERE status = 'pending'")->fetchColumn(); } catch(Throwable $e) {}
-        try { $counts['active_coupons'] = (int)$pdo->query("SELECT COUNT(*) FROM coupons WHERE active=1 AND (end_date IS NULL OR end_date >= CURDATE())")->fetchColumn(); } catch(Throwable $e) {}
 
         $_SESSION['admin_badge_counts'] = $counts;
         return $counts;
@@ -44,9 +39,6 @@ $badgeCounts = admin_badge_counts($pdo);
 $pendingOrders = $badgeCounts['pending_orders'];
 $requestedRefunds = $badgeCounts['requested_refunds'];
 $newLeads = $badgeCounts['new_leads'];
-$pendingReviews = $badgeCounts['pending_reviews'];
-$activeCoupons = $badgeCounts['active_coupons'];
-
 $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 ?>
 <!DOCTYPE html>
@@ -54,7 +46,8 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - GeekSupportSales</title>
+    <link rel="icon" type="image/svg+xml" href="../IMAGE/geeksupport_unique_simple_icon.svg">
+    <title>Admin Panel - Geek Support LLc</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -107,8 +100,6 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
         /* Sidebar brand */
         .brand-icon {
-            background: linear-gradient(135deg, #2563EB 0%, #0F172A 100%);
-            border-radius: 12px;
             width:40px; height:40px;
             display:flex; align-items:center; justify-content:center;
         }
@@ -129,18 +120,21 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
     <div class="flex h-screen overflow-hidden">
         
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-slate-100 flex flex-col shadow-sm">
+        <aside id="admin-sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-100 flex flex-col shadow-sm transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
             <!-- Logo -->
             <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-100">
                 <div class="brand-icon">
-                    <i class="ri-printer-fill text-white text-xl"></i>
+                    <img src="../IMAGE/geeksupport_unique_simple_icon.svg" alt="Geek Support LLc" class="w-8 h-8 object-contain">
                 </div>
-                <div class="leading-tight">
+                <div class="leading-tight min-w-0">
                     <div class="text-sm font-black">
-                        <span style="color:#2563EB">Geek</span><span style="color:#0F172A">Admin</span>
+                        <span style="color:#2563EB">Geek Support LLc</span><span style="color:#0F172A"> Admin</span>
                     </div>
-                    <div class="text-[10px] text-slate-400 font-medium">GeekSupportSales</div>
+                    <div class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">fast secure remote help</div>
                 </div>
+                <button type="button" onclick="toggleAdminSidebar(false)" class="ml-auto lg:hidden w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 transition" aria-label="Close admin menu">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
             </div>
 
             <!-- Nav Links -->
@@ -179,11 +173,7 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                     <i class="ri-group-line text-lg"></i>
                     <span>Customers</span>
                 </a>
-                <a href="?page=reviews" class="sidebar-link <?php echo $page === 'reviews' ? 'active' : ''; ?> flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 text-sm">
-                    <i class="ri-star-line text-lg"></i>
-                    <span>Reviews</span>
-                    <?php if($pendingReviews > 0): ?><span class="ml-auto bg-amber2-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"><?php echo $pendingReviews; ?></span><?php endif; ?>
-                </a>
+
 
                 <!-- Divider -->
                 <div class="pt-3 pb-1">
@@ -198,11 +188,7 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                     <i class="ri-image-2-line text-lg"></i>
                     <span>Banner Manager</span>
                 </a>
-                <a href="?page=coupons" class="sidebar-link <?php echo $page === 'coupons' ? 'active' : ''; ?> flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 text-sm">
-                    <i class="ri-coupon-3-line text-lg"></i>
-                    <span>Coupons</span>
-                    <?php if($activeCoupons > 0): ?><span class="ml-auto bg-navy-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"><?php echo $activeCoupons; ?></span><?php endif; ?>
-                </a>
+
 
                 <!-- Divider -->
                 <div class="pt-3 pb-1">
@@ -224,6 +210,10 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">System</p>
                 </div>
 
+                <a href="?page=policies" class="sidebar-link <?php echo $page === 'policies' ? 'active' : ''; ?> flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 text-sm">
+                    <i class="ri-file-list-3-line text-lg"></i>
+                    <span>Policies</span>
+                </a>
                 <a href="?page=settings" class="sidebar-link <?php echo $page === 'settings' ? 'active' : ''; ?> flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 text-sm">
                     <i class="ri-settings-3-line text-lg"></i>
                     <span>Settings</span>
@@ -249,19 +239,25 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                 </a>
             </div>
         </aside>
+        <div id="admin-sidebar-overlay" class="fixed inset-0 bg-slate-950/45 z-40 hidden lg:hidden" onclick="toggleAdminSidebar(false)"></div>
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             
             <!-- Header -->
-            <header class="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6" style="box-shadow:0 1px 4px rgba(79,70,229,0.06)">
-                <div>
-                    <h1 class="text-xl font-black text-slate-800 capitalize"><?php echo ucfirst(str_replace('_', ' ', $page)); ?></h1>
-                    <p class="text-xs text-slate-400">Welcome back, Admin! 👋</p>
+            <header class="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 sm:px-6" style="box-shadow:0 1px 4px rgba(79,70,229,0.06)">
+                <div class="flex items-center gap-3 min-w-0">
+                    <button type="button" onclick="toggleAdminSidebar(true)" class="lg:hidden w-9 h-9 flex items-center justify-center text-slate-600 hover:text-navy-600 transition" aria-label="Open admin menu">
+                        <i class="ri-menu-3-line text-2xl"></i>
+                    </button>
+                    <div class="min-w-0">
+                        <h1 class="text-lg sm:text-xl font-black text-slate-800 capitalize truncate"><?php echo ucfirst(str_replace('_', ' ', $page)); ?></h1>
+                        <p class="text-xs text-slate-400 truncate">Welcome back, Admin! 👋</p>
+                    </div>
                 </div>
-                                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                     <?php if(in_array($page, ['products','categories','brands','orders','leads','customers','refunds'])): ?>
-                    <div class="flex border border-slate-200 rounded-lg overflow-hidden h-8 mr-2">
+                    <div class="hidden sm:flex border border-slate-200 rounded-lg overflow-hidden h-8 mr-2">
                         <button onclick="setAdminView('grid')" id="view-grid-btn" class="px-2.5 bg-white text-slate-400 hover:text-navy-600 transition" title="Grid View"><i class="ri-grid-fill"></i></button>
                         <button onclick="setAdminView('list')" id="view-list-btn" class="px-2.5 bg-navy-600 text-white transition" title="List View"><i class="ri-list-check-2"></i></button>
                     </div>
@@ -279,7 +275,7 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-y-auto p-6">
+            <main class="flex-1 overflow-y-auto p-4 sm:p-6">
                 <?php
                 switch($page) {
                     case 'dashboard':
@@ -321,11 +317,8 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
                     case 'customers':
                         include 'pages/customers.php';
                         break;
-                    case 'coupons':
-                        include 'pages/coupons.php';
-                        break;
-                    case 'reviews':
-                        include 'pages/reviews.php';
+                    case 'policies':
+                        include 'pages/policies.php';
                         break;
                     default:
                         include 'pages/dashboard.php';
@@ -337,6 +330,16 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
     </div>
 
     <script>
+        function toggleAdminSidebar(force) {
+            const sidebar = document.getElementById('admin-sidebar');
+            const overlay = document.getElementById('admin-sidebar-overlay');
+            if (!sidebar || !overlay) return;
+            const shouldOpen = typeof force === 'boolean' ? force : sidebar.classList.contains('-translate-x-full');
+            sidebar.classList.toggle('-translate-x-full', !shouldOpen);
+            overlay.classList.toggle('hidden', !shouldOpen);
+            document.documentElement.classList.toggle('overflow-hidden', shouldOpen);
+        }
+
         function getAdminView() {
             const match = document.cookie.match(/(?:^|; )admin_view=([^;]+)/);
             return match ? decodeURIComponent(match[1]) : 'list';
@@ -365,6 +368,9 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
         }
 
         document.addEventListener('DOMContentLoaded', paintAdminViewButtons);
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') toggleAdminSidebar(false);
+        });
     </script>
 </body>
 </html>

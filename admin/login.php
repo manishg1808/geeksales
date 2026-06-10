@@ -27,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - GeekSupportSales</title>
+    <link rel="icon" type="image/svg+xml" href="../IMAGE/geeksupport_unique_simple_icon.svg">
+    <title>Admin Login - Geek Support LLc</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -56,13 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
-            <div class="bg-white rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <i class="ri-printer-fill text-navy-600 text-3xl"></i>
+            <div class="w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <img src="../IMAGE/geeksupport_unique_simple_icon.svg" alt="Geek Support LLc" class="w-12 h-12 object-contain">
             </div>
-            <h1 class="text-2xl font-black text-white">
-                <span class="text-white">Admin</span><span class="text-amber2-500">Panel</span>
-            </h1>
-            <p class="text-navy-200 text-sm mt-1">GeekSupportSales Management</p>
+            <h1 class="text-2xl font-black text-white">Geek Support LLc</h1>
+            <p class="text-navy-200 text-[11px] font-bold uppercase tracking-widest mt-1">fast secure remote help</p>
+            <p class="text-navy-200 text-sm mt-2">Admin Management</p>
         </div>
 
         <!-- Login Card -->
@@ -111,11 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Sign In
                 </button>
 
-                <div class="text-center">
-                    <p class="text-xs text-slate-400 bg-slate-50 px-4 py-2 rounded-lg">
-                        Demo: <span class="font-semibold text-slate-600">admin / admin123</span>
-                    </p>
-                </div>
             </form>
         </div>
 

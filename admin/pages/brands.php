@@ -54,9 +54,9 @@ $statusFilter = $_GET['status'] ?? '';
 $where = [];
 $params = [];
 if ($q !== '') {
-    $where[] = '(b.name LIKE ? OR b.slug LIKE ? OR b.origin LIKE ? OR b.website LIKE ?)';
+    $where[] = '(b.name LIKE ? OR b.slug LIKE ? OR b.origin LIKE ?)';
     $term = '%' . $q . '%';
-    array_push($params, $term, $term, $term, $term);
+    array_push($params, $term, $term, $term);
 }
 if (in_array($statusFilter, ['active', 'inactive'], true)) {
     $where[] = 'b.active = ?';
@@ -159,7 +159,7 @@ $iconColors = ['navy'=>'bg-navy-100 text-navy-600','red'=>'bg-red-100 text-red-6
                 <div class="text-xs text-slate-400 mt-1"><?php echo e($b['slug']); ?></div>
             </div>
         </div>
-        <p class="text-xs text-slate-500 mb-4 line-clamp-2"><?php echo e($b['description'] ?? 'No description provided.'); ?></p>
+        <p class="text-xs text-slate-500 mb-4 line-clamp-1"><i class="ri-link text-slate-400"></i> products.php?brand=<?php echo e($b['name']); ?></p>
         <div class="flex items-center justify-between mb-4">
             <span class="<?php echo $b['active']?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'; ?> text-[10px] font-bold px-2 py-0.5 rounded-full block"><?php echo $b['active'] ? 'Active' : 'Inactive'; ?></span>
             <span class="text-xs text-slate-500 font-semibold"><?php echo (int)$b['product_count']; ?> Products</span>
@@ -185,7 +185,7 @@ document.getElementById('selectAllGrid')?.addEventListener('change', function() 
                 <tr>
                     <th class="px-5 py-3.5 text-left w-10"><input type="checkbox" id="selectAllList" class="w-4 h-4 rounded text-indigo-600 border-slate-300"></th>
                     <th class="px-5 py-3.5 text-left">Brand</th>
-                    <th class="px-5 py-3.5 text-left hidden sm:table-cell">Description</th>
+                    <th class="px-5 py-3.5 text-left hidden sm:table-cell">Catalog Path</th>
                     <th class="px-5 py-3.5 text-left">Products</th>
                     <th class="px-5 py-3.5 text-left">Status</th>
                     <th class="px-5 py-3.5 text-right">Actions</th>
@@ -204,7 +204,7 @@ document.getElementById('selectAllGrid')?.addEventListener('change', function() 
                             </div>
                         </div>
                     </td>
-                    <td class="px-5 py-3.5 text-slate-500 text-xs max-w-xs truncate hidden sm:table-cell"><?php echo e($b['description']); ?></td>
+                    <td class="px-5 py-3.5 text-slate-500 text-xs max-w-xs truncate hidden sm:table-cell">products.php?brand=<?php echo e($b['name']); ?></td>
                     <td class="px-5 py-3.5"><span class="bg-slate-100 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg"><?php echo (int)$b['product_count']; ?></span></td>
                     <td class="px-5 py-3.5"><span class="<?php echo $b['active']?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'; ?> text-xs font-bold px-2.5 py-1 rounded-full"><?php echo $b['active'] ? 'Active' : 'Inactive'; ?></span></td>
                     <td class="px-5 py-3.5 text-right">

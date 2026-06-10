@@ -1,9 +1,20 @@
+<?php require_once __DIR__ . '/admin/includes/db.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>All Printers – GeekSupportSales</title>
+  <?php 
+  $seo = get_page_seo(); 
+  ?>
+  <title><?php echo e($seo['title']); ?></title>
+  <meta name="description" content="<?php echo e($seo['description']); ?>" />
+  <meta name="keywords" content="<?php echo e($seo['keywords']); ?>" />
+  <?php
+  render_google_site_verification();
+  render_google_analytics();
+  render_google_tag_manager_head();
+  ?>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -58,6 +69,7 @@
   </style>
 </head>
 <body class="font-sans bg-slate-50 text-slate-800 antialiased">
+<?php render_google_tag_manager_body(); ?>
 
 <!-- TOP BAR -->
 <div class="brand-gradient text-white hidden md:block">
@@ -94,11 +106,12 @@
 
     <!-- Logo -->
     <a href="index.php" class="flex items-center gap-2.5 shrink-0">
-      <div class="bg-navy-600 rounded-lg w-8 h-8 flex items-center justify-center">
-        <i class="ri-printer-fill text-white text-sm"></i>
+      <div class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
+        <img src="IMAGE/geeksupport_unique_simple_icon.svg" alt="Geek Support LLc" class="w-6 h-6 sm:w-7 sm:h-7 object-contain">
       </div>
-      <span class="text-[15px] font-black tracking-tight leading-none">
-        <span class="text-navy-600">Geek</span><span class="text-amber2-500">Support</span><span class="text-slate-800">Sales</span>
+      <span class="flex flex-col justify-center leading-none">
+        <span class="text-[13px] sm:text-[15px] font-black text-slate-800 whitespace-nowrap">Geek Support LLc</span>
+        <span class="mt-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-wide sm:tracking-widest text-slate-400 whitespace-nowrap">fast secure remote help</span>
       </span>
     </a>
 
@@ -110,9 +123,9 @@
     </nav>
 
     <!-- Search -->
-    <form data-product-search-form class="hidden md:flex flex-1 max-w-sm ml-auto">
+    <form data-product-search-form action="products.php" method="GET" class="hidden md:flex flex-1 max-w-sm ml-auto relative header-search-form">
       <div class="flex w-full h-9 rounded-lg border border-slate-200 bg-slate-50 hover:border-slate-300 focus-within:border-navy-400 focus-within:bg-white overflow-hidden transition">
-        <input id="search-input" type="text" placeholder="Search printers, brand, model…" oninput="applyFilters()" class="flex-1 px-3 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400"/>
+        <input id="search-input" name="q" type="text" placeholder="Search printers, brand, model…" class="flex-1 px-3 text-sm bg-transparent outline-none text-slate-700 placeholder-slate-400 header-search-input" autocomplete="off"/>
         <button type="submit" class="px-3 text-slate-400 hover:text-navy-600 transition" aria-label="Search products">
           <i class="ri-search-2-line text-base"></i>
         </button>
@@ -427,9 +440,9 @@
     <div class="flex justify-between font-bold text-base mb-4 text-slate-800">
       <span>Total:</span><span id="cart-total" class="text-navy-600">$0.00</span>
     </div>
-    <button class="w-full btn-gradient text-white font-bold py-3 rounded-xl transition mb-2 flex items-center justify-center gap-2 text-sm">
+    <a href="checkout.php" class="w-full btn-gradient text-white font-bold py-3 rounded-xl transition mb-2 flex items-center justify-center gap-2 text-sm">
       <i class="ri-lock-2-line"></i> Secure Checkout
-    </button>
+    </a>
     <button onclick="toggleCart()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 rounded-xl transition text-sm">Continue Shopping</button>
   </div>
 </div>
@@ -455,54 +468,6 @@
 
 
 <!-- FOOTER -->
-<footer class="bg-slate-900 text-slate-400 pt-14 pb-8 px-5 mt-10">
-  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
-    <div>
-      <div class="flex items-center gap-2.5 mb-4">
-        <div class="bg-navy-600 rounded-xl w-9 h-9 flex items-center justify-center shrink-0"><i class="ri-printer-fill text-white text-base"></i></div>
-        <div><span class="text-base font-black text-white">Geek</span><span class="text-base font-black text-amber2-400">Support</span><span class="text-base font-black text-slate-300">Sales</span></div>
-      </div>
-      <p class="text-sm leading-relaxed text-slate-500">Your trusted source for printers, ink, toner, and expert tech support.</p>
-      <div class="flex gap-2 mt-5">
-        <a href="#" class="bg-slate-800 hover:bg-navy-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-facebook-fill text-sm"></i></a>
-        <a href="#" class="bg-slate-800 hover:bg-navy-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-twitter-x-line text-sm"></i></a>
-        <a href="#" class="bg-slate-800 hover:bg-navy-600 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="ri-instagram-line text-sm"></i></a>
-      </div>
-    </div>
-    <div>
-      <h4 class="text-white font-bold text-sm mb-4">Categories</h4>
-      <ul class="space-y-2 text-sm">
-        <li><a href="products.php?cat=inkjet" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Inkjet Printers</a></li>
-        <li><a href="products.php?cat=laser" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Laser Printers</a></li>
-        <li><a href="products.php?cat=allinone" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> All-in-One</a></li>
-        <li><a href="products.php?cat=business" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Business</a></li>
-        <li><a href="products.php?cat=ink" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Ink & Toner</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4 class="text-white font-bold text-sm mb-4">Support</h4>
-      <ul class="space-y-2 text-sm">
-        <li><a href="contact.php" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Setup Help</a></li>
-        <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Driver Downloads</a></li>
-        <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Track My Order</a></li>
-        <li><a href="#" class="hover:text-white transition flex items-center gap-1.5"><i class="ri-arrow-right-s-line"></i> Returns</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4 class="text-white font-bold text-sm mb-4">Contact</h4>
-      <ul class="space-y-2 text-sm">
-        <li class="flex items-center gap-2"><i class="ri-phone-line text-navy-400"></i> 8019511533</li>
-        <li class="flex items-center gap-2"><i class="ri-mail-line text-navy-400"></i> support@geeksupportsales.com</li>
-        <li class="flex items-center gap-2"><i class="ri-time-line text-navy-400"></i> Mon–Fri 8am–8pm EST</li>
-      </ul>
-    </div>
-  </div>
-  <div class="max-w-7xl mx-auto pt-6 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-600">
-    <p>© 2025 GeekSupportSales LLC. All rights reserved.</p>
-    <div class="flex items-center gap-3 text-slate-500 text-xl">
-      <i class="ri-visa-line"></i><i class="ri-mastercard-line"></i><i class="ri-paypal-line"></i><i class="ri-apple-line"></i>
-    </div>
-  </div>
-</footer>
+<?php include __DIR__ . '/includes/footer.php'; ?>
 </body>
 </html>
